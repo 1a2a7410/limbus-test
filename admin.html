@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관리자 - 림버스</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; max-width: 1100px; }
+  h1 { font-size: 28px; margin-bottom: 16px; }
+  .panel { border:1px solid #e5e5e5; padding:16px; border-radius:12px; background:#fff; margin-bottom:16px; }
+  label { display:block; margin:10px 0 6px; font-weight:600; }
+  input, textarea, select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; }
+  .row { display:grid; grid-template-columns: 1fr 2fr 1fr; gap:12px; }
+  .btn { padding:10px 14px; border:1px solid #111; background:#111; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; }
+  .btn.secondary { background:#fff; color:#111; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:8px; }
+  .item { display:flex; gap:8px; align-items:center; }
+  .item img { width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #eee; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; font-size:14px; }
+  th { background:#fafafa; }
+  .pill { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:2px 8px; margin:2px; font-size:12px; background:#fafafa; }
+  .right { text-align:right; }
+  .muted { color:#666; font-size:12px; }
+</style>
+</head>
+<body>
+  <h1>관리자</h1>
+
+  <div class="panel">
+    <h2 style="margin-top:0">계정 추가/수정</h2>
+    <div class="row">
+      <div>
+        <label>UID</label>
+        <input id="uid" required placeholder="예: 1005">
+      </div>
+      <div>
+        <label>부가설명</label>
+        <input id="desc" placeholder="예: 초반 진행용">
+      </div>
+      <div>
+        <label>판매상태</label>
+        <select id="status">
+          <option>판매중</option>
+          <option>판매완료</option>
+        </select>
+      </div>
+    </div>
+
+    <label>포함 아이템 (여러개 선택)</label>
+    <div id="items" class="grid"></div>
+
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button id="save" class="btn" type="button">저장(신규/수정)</button>
+      <button id="delete" class="btn secondary" type="button">삭제</button>
+      <div id="msg" style="margin-left:8px;"></div>
+    </div>
+    <div class="muted">※ 수정 시: 아래 목록에서 "편집"을 눌러 불러온 뒤 저장하세요.</div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">계정 목록</h2>
+    <table>
+      <thead>
+        <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>아이템</th><th class="right">작업</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+<script>
+const API_BASE="https://script.google.com/macros/s/AKfycbx9v5WxjwxfPIPJ_hyfVZylrTtPfzPkazxHl5tuFBIkxDL7lX4suC10JequWg4J6TVR6Q/exec";
+function qs(s){ return document.querySelector(s); }
+async function fetchJSON(u,opt){ const r=await fetch(u,opt); if(!r.ok) throw new Error(r.status); return r.json(); }
+
+async function loadItems(){
+  const items=await fetchJSON(`${API_BASE}?sheet=items`);
+  const box=qs('#items'); box.innerHTML='';
+  items.forEach(it=>{
+    const row=document.createElement('label'); row.className='item';
+    row.innerHTML=`<input type='checkbox' value='${it["아이템명"]}'><img src='${it["이미지URL"]}' alt='${it["아이템명"]}'><span>${it["아이템명"]}</span>`;
+    box.appendChild(row);
+  });
+}
+function fillForm(acc){
+  qs('#uid').value=acc["UID"]||'';
+  qs('#desc').value=acc["부가설명"]||'';
+  qs('#status').value=acc["판매상태"]||'판매중';
+  const vals=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>acc[k]);
+  document.querySelectorAll('#items input[type=checkbox]').forEach(ch=> ch.checked = vals.includes(ch.value));
+}
+async function loadAccounts(){
+  const list=await fetchJSON(`${API_BASE}?sheet=accounts`);
+  const tb=qs('#tbody'); tb.innerHTML='';
+  list.forEach(acc=>{
+    const items=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>`<span class='pill'>${acc[k]}</span>`).join('');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${acc["UID"]||''}</td><td>${acc["부가설명"]||''}</td><td>${acc["판매상태"]||''}</td><td>${items}</td><td class='right'><button class='btn secondary' data-uid='${acc["UID"]}'>편집</button></td>`;
+    tr.querySelector('button').addEventListener('click', ()=> fillForm(acc));
+    tb.appendChild(tr);
+  });
+}
+function collectItems(){ return Array.from(document.querySelectorAll('#items input:checked')).map(i=>i.value); }
+async function saveAccount(){
+  const payload={ type:'account_upsert', data:{ UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, items:collectItems() } };
+  const out=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(out.status==='ok'){ qs('#msg').innerHTML='<span style="color:#0a7;font-weight:600">저장 완료</span>'; loadAccounts(); }
+  else { qs('#msg').innerHTML='<span style="color:#c00;font-weight:600">실패: '+(out.message||'알 수 없는 오류')+'</span>'; }
+}
+async function deleteAccount(){
+  const uid=qs('#uid').value.trim();
+  if(!uid){ alert('UID를 입력하세요.'); return; }
+  if(!confirm('정말 삭제하시겠어요?')) return;
+  const payload={ type:'account_delete', data:{ UID:uid } };
+  const out=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if(out.status==='ok'){ qs('#msg').innerHTML='<span style="color:#0a7;font-weight:600">삭제 완료</span>'; loadAccounts(); }
+  else { qs('#msg').innerHTML='<span style="color:#c00;font-weight:600">실패: '+(out.message||'알 수 없는 오류')+'</span>'; }
+}
+qs('#save').addEventListener('click', saveAccount);
+qs('#delete').addEventListener('click', deleteAccount);
+(async function init(){ await loadItems(); await loadAccounts(); })();
+</script>
+</body>
+</html>
