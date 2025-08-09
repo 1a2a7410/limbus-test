@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>림버스</title>
+<style>
+  :root { --bg:#ffffff; --fg:#111; --muted:#666; --border:#e5e5e5; --primary:#111; --sold:#c62828; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background:var(--bg); color:var(--fg); }
+  h1 { text-align: center; font-size: 40px; margin: 0 0 16px; }
+  .toolbar { display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap; margin-bottom: 16px; }
+  #selected-items { font-size:14px; color:var(--muted); }
+  #items { display:grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap:12px; max-width: 1100px; margin: 0 auto 24px; }
+  .card { border:1px solid var(--border); border-radius:10px; padding:8px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .1s ease; background:#fff; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .card img { width:100%; height:100px; object-fit:cover; border-radius:8px; }
+  .name { margin-top:6px; font-size:14px; }
+  .selected { outline: 3px solid #ff4d4f; }
+  .btn { padding:10px 16px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:8px; cursor:pointer; font-weight:600; }
+  .btn.secondary { background:#fff; color:var(--primary); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  #results { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:16px; max-width: 1100px; margin: 24px auto; }
+  .account { position:relative; border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; text-align:left; }
+  .account.hint { }
+  .account h3 { margin:0 0 8px; font-size:16px; }
+  .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .thumbs img { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+  .chip { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:4px 10px; margin:2px; font-size:12px; background:#fafafa; }
+  .soldout::after {
+    content: "판매완료";
+    position:absolute; top:12px; right:-12px;
+    background: var(--sold); color:#fff; font-size:12px; font-weight:700;
+    padding:6px 10px; border-radius:999px; transform: rotate(6deg);
+  }
+  .sold-dim { opacity:.55; filter: grayscale(0.2); }
+  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px; }
+  .modal { width: min(720px, 95vw); background:#fff; border-radius:14px; border:1px solid var(--border); padding:16px; }
+  .modal header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .modal .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:12px; }
+  .modal .tile { border:1px solid var(--border); border-radius:10px; padding:8px; text-align:center; }
+  .modal .tile img { width:100%; height:100px; object-fit:cover; border-radius:8px; }
+</style>
+</head>
+<body>
+  <h1 id="game-title"></h1>
+  <div class="toolbar">
+    <div id="selected-items"></div>
+    <button id="clear-btn" class="btn secondary" type="button">선택 해제</button>
+    <button id="search-btn" class="btn" type="button" disabled>검색</button>
+  </div>
+
+  <div id="items"></div>
+  <div id="results"></div>
+
+  <div id="backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <header>
+        <h2 id="detail-title" style="margin:0;font-size:18px;"></h2>
+        <button id="close-modal" class="btn secondary" type="button">닫기</button>
+      </header>
+      <p id="detail-desc" style="margin-top:0;color:#555;"></p>
+      <div id="detail-grid" class="grid"></div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = "https://script.google.com/macros/s/AKfycbx9v5WxjwxfPIPJ_hyfVZylrTtPfzPkazxHl5tuFBIkxDL7lX4suC10JequWg4J6TVR6Q/exec";
+
+let selected = [];
+let itemData = [];
+
+const el = (s)=>document.querySelector(s);
+async function fetchJSON(u,o){ const r=await fetch(u,o); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function loadGameTitle(){ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText=d[0]?.["게임제목"]||"림버스"; }
+async function loadItems(){
+  itemData = await fetchJSON(`${API_BASE}?sheet=items`);
+  const c = el('#items'); c.innerHTML='';
+  itemData.forEach(it=>{
+    const b=document.createElement('button'); b.type='button'; b.className='card'; b.dataset.name=it["아이템명"];
+    b.onclick=()=>toggleSelect(it["아이템명"]);
+    b.innerHTML=`<img src="${it["이미지URL"]}" alt="${it["아이템명"]}"><div class='name'>${it["아이템명"]}</div>`;
+    c.appendChild(b);
+  });
+}
+function toggleSelect(n){ if(selected.includes(n)) selected=selected.filter(x=>x!==n); else selected.push(n); renderSelected(); }
+function renderSelected(){
+  el('#selected-items').innerHTML = selected.length? selected.map(n=>`<span class='chip'>${n}</span>`).join('') : '아이템을 선택하세요';
+  el('#search-btn').disabled = selected.length===0;
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('selected', selected.includes(c.dataset.name)));
+}
+async function searchAccounts(){
+  const accounts = await fetchJSON(`${API_BASE}?sheet=accounts`);
+  const filtered = accounts.filter(acc=> selected.every(sel=>Object.values(acc).includes(sel)));
+  const map = Object.fromEntries(itemData.map(it=>[it["아이템명"], it["이미지URL"]]));
+  const results = el('#results'); results.innerHTML='';
+  if(!filtered.length){ results.innerHTML='<p>조건에 맞는 계정이 없습니다.</p>'; return; }
+  filtered.forEach(acc=>{
+    const sold = (acc["판매상태"]||'').trim()==='판매완료';
+    const div = document.createElement('div'); div.className='account'+(sold?' soldout sold-dim':'');
+    div.innerHTML = `<h3>${acc["UID"]} - ${acc["부가설명"]||''}</h3>`;
+    const thumbs = document.createElement('div'); thumbs.className='thumbs';
+    const names = [];
+    Object.keys(acc).forEach(k=>{
+      if(k.startsWith('포함아이템') && acc[k]){
+        names.push(acc[k]); const url=map[acc[k]]; if(url){ const img=document.createElement('img'); img.src=url; img.alt=acc[k]; img.title=acc[k]; thumbs.appendChild(img); }
+      }
+    });
+    const more=document.createElement('button'); more.className='btn secondary'; more.type='button'; more.textContent='자세히 보기';
+    more.addEventListener('click', ()=>openDetail(acc, names));
+    div.appendChild(thumbs); div.appendChild(more); results.appendChild(div);
+  });
+}
+function openDetail(acc, names){
+  const map = Object.fromEntries(itemData.map(it=>[it["아이템명"], it["이미지URL"]]));
+  el('#detail-title').textContent=`UID ${acc["UID"]}${(acc["판매상태"]||'')==='판매완료'?' · 판매완료':''}`;
+  el('#detail-desc').textContent=acc["부가설명"]||'';
+  const g=el('#detail-grid'); g.innerHTML='';
+  names.forEach(nm=>{ const url=map[nm]; const t=document.createElement('div'); t.className='tile'; t.innerHTML=`<img src="${url}" alt="${nm}"><div style='margin-top:6px;font-size:13px;'>${nm}</div>`; g.appendChild(t); });
+  el('#backdrop').style.display='flex';
+}
+el('#close-modal').addEventListener('click', ()=> el('#backdrop').style.display='none');
+el('#backdrop').addEventListener('click', (e)=>{ if(e.target.id==='backdrop') el('#backdrop').style.display='none'; });
+el('#search-btn').addEventListener('click', searchAccounts);
+el('#clear-btn').addEventListener('click', ()=>{ selected=[]; renderSelected(); });
+loadGameTitle(); loadItems(); renderSelected();
+</script>
+</body>
+</html>
