@@ -1,24 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>관리자 - 림버스</title>
+<title>관리자 - 림버스 (비밀번호 필요)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; max-width: 1100px; }
+  :root { --bg: #f7f7fb; --card:#ffffff; --fg:#1a1a1a; --muted:#667085; --border:#e7e7ef; --primary:#1f1f3a; --accent:#4b61ff; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: linear-gradient(180deg,#fafafe, #f6f7fc); color:var(--fg); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
   h1 { font-size: 28px; margin-bottom: 16px; }
-  .panel { border:1px solid #e5e5e5; padding:16px; border-radius:12px; background:#fff; margin-bottom:16px; }
+  .panel { border:1px solid var(--border); padding:16px; border-radius:14px; background:#fff; margin-bottom:16px; box-shadow: 0 8px 20px rgba(25,25,60,.04); }
   label { display:block; margin:10px 0 6px; font-weight:600; }
-  input, textarea, select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; }
+  input, textarea, select { width:100%; padding:10px; border:1px solid #d9d9e6; border-radius:10px; background:#fff; }
   .row { display:grid; grid-template-columns: 1fr 2fr 1fr; gap:12px; }
-  .btn { padding:10px 14px; border:1px solid #111; background:#111; color:#fff; border-radius:8px; cursor:pointer; font-weight:600; }
-  .btn.secondary { background:#fff; color:#111; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:8px; }
+  .btn { padding:10px 14px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
+  .btn.secondary { background:#fff; color:var(--primary); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:10px; background:#fff; }
   .item { display:flex; gap:8px; align-items:center; }
-  .item img { width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #eee; }
-  table { width:100%; border-collapse: collapse; }
-  th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; font-size:14px; }
+  .item img { width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+  table { width:100%; border-collapse: collapse; background:#fff; border-radius:10px; overflow:hidden; }
+  th, td { border-bottom:1px solid #eee; padding:10px; text-align:left; font-size:14px; }
   th { background:#fafafa; }
   .pill { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:2px 8px; margin:2px; font-size:12px; background:#fafafa; }
   .right { text-align:right; }
@@ -26,100 +31,150 @@
 </style>
 </head>
 <body>
-  <h1>관리자</h1>
+  <div class="wrap">
+    <h1>관리자 (비밀번호 필요)</h1>
 
-  <div class="panel">
-    <h2 style="margin-top:0">계정 추가/수정</h2>
-    <div class="row">
-      <div>
-        <label>UID</label>
-        <input id="uid" required placeholder="예: 1005">
-      </div>
-      <div>
-        <label>부가설명</label>
-        <input id="desc" placeholder="예: 초반 진행용">
-      </div>
-      <div>
-        <label>판매상태</label>
-        <select id="status">
-          <option>판매중</option>
-          <option>판매완료</option>
-        </select>
+    <div id="authPanel" class="panel">
+      <h2 style="margin-top:0">비밀번호 입력</h2>
+      <label>관리자 비밀번호</label>
+      <input id="pw" type="password" placeholder="비밀번호">
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="login" class="btn" type="button">입장</button>
+        <div id="authMsg" class="muted"></div>
       </div>
     </div>
 
-    <label>포함 아이템 (여러개 선택)</label>
-    <div id="items" class="grid"></div>
+    <div id="main" style="display:none;">
+      <div class="panel">
+        <h2 style="margin-top:0">계정 추가/수정</h2>
+        <div class="row">
+          <div>
+            <label>UID</label>
+            <input id="uid" required placeholder="예: 1005">
+          </div>
+          <div>
+            <label>부가설명</label>
+            <input id="desc" placeholder="예: 초반 진행용">
+          </div>
+          <div>
+            <label>판매상태</label>
+            <select id="status">
+              <option>판매중</option>
+              <option>판매완료</option>
+            </select>
+          </div>
+        </div>
 
-    <div style="display:flex; gap:8px; margin-top:12px;">
-      <button id="save" class="btn" type="button">저장(신규/수정)</button>
-      <button id="delete" class="btn secondary" type="button">삭제</button>
-      <div id="msg" style="margin-left:8px;"></div>
+        <label>포함 아이템 (여러개 선택)</label>
+        <div id="items" class="grid"></div>
+
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="save" class="btn" type="button">저장(신규/수정)</button>
+          <button id="delete" class="btn secondary" type="button">삭제</button>
+          <div id="msg" style="margin-left:8px;"></div>
+        </div>
+        <div class="muted">※ 수정 시: 아래 목록에서 "편집"을 눌러 불러온 뒤 저장하세요.</div>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-top:0">계정 목록</h2>
+        <table>
+          <thead>
+            <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>아이템</th><th class="right">작업</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="muted">※ 수정 시: 아래 목록에서 "편집"을 눌러 불러온 뒤 저장하세요.</div>
-  </div>
-
-  <div class="panel">
-    <h2 style="margin-top:0">계정 목록</h2>
-    <table>
-      <thead>
-        <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>아이템</th><th class="right">작업</th></tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
   </div>
 
 <script>
 const API_BASE="https://script.google.com/macros/s/AKfycbx9v5WxjwxfPIPJ_hyfVZylrTtPfzPkazxHl5tuFBIkxDL7lX4suC10JequWg4J6TVR6Q/exec";
+const ADMIN_PASSWORD="limbus!2025";
+
+function saveToken(t){ localStorage.setItem('limbus_admin_token', t); }
+function getToken(){ return localStorage.getItem('limbus_admin_token') || ''; }
+
 function qs(s){ return document.querySelector(s); }
 async function fetchJSON(u,opt){ const r=await fetch(u,opt); if(!r.ok) throw new Error(r.status); return r.json(); }
 
-async function loadItems(){
-  const items=await fetchJSON(`${API_BASE}?sheet=items`);
-  const box=qs('#items'); box.innerHTML='';
-  items.forEach(it=>{
-    const row=document.createElement('label'); row.className='item';
-    row.innerHTML=`<input type='checkbox' value='${it["아이템명"]}'><img src='${it["이미지URL"]}' alt='${it["아이템명"]}'><span>${it["아이템명"]}</span>`;
-    box.appendChild(row);
-  });
+async function loadItems(){ const items=await fetchJSON(`${API_BASE}?sheet=items`); const box=qs('#items'); box.innerHTML='';
+  items.forEach(it=>{ const row=document.createElement('label'); row.className='item';
+    row.innerHTML=`<input type='checkbox' value='${it["아이템명"]}'><img src='${it["이미지URL"]}' alt='${it["아이템명"]}'><span>${it["아이템명"]}</span>`; box.appendChild(row); });
 }
-function fillForm(acc){
-  qs('#uid').value=acc["UID"]||'';
-  qs('#desc').value=acc["부가설명"]||'';
-  qs('#status').value=acc["판매상태"]||'판매중';
+function fillForm(acc){ qs('#uid').value=acc["UID"]||''; qs('#desc').value=acc["부가설명"]||''; qs('#status').value=acc["판매상태"]||'판매중';
   const vals=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>acc[k]);
   document.querySelectorAll('#items input[type=checkbox]').forEach(ch=> ch.checked = vals.includes(ch.value));
 }
-async function loadAccounts(){
-  const list=await fetchJSON(`${API_BASE}?sheet=accounts`);
-  const tb=qs('#tbody'); tb.innerHTML='';
-  list.forEach(acc=>{
-    const items=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>`<span class='pill'>${acc[k]}</span>`).join('');
+async function loadAccounts(){ const list=await fetchJSON(`${API_BASE}?sheet=accounts`); const tb=qs('#tbody'); tb.innerHTML='';
+  list.forEach(acc=>{ const items=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>`<span class='pill'>${acc[k]}</span>`).join('');
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${acc["UID"]||''}</td><td>${acc["부가설명"]||''}</td><td>${acc["판매상태"]||''}</td><td>${items}</td><td class='right'><button class='btn secondary' data-uid='${acc["UID"]}'>편집</button></td>`;
-    tr.querySelector('button').addEventListener('click', ()=> fillForm(acc));
-    tb.appendChild(tr);
-  });
+    tr.querySelector('button').addEventListener('click', ()=> fillForm(acc)); tb.appendChild(tr); });
 }
+
 function collectItems(){ return Array.from(document.querySelectorAll('#items input:checked')).map(i=>i.value); }
+
+async function upsert(payload){ 
+  try{
+    const out = await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    qs('#msg').innerHTML = '<span style="color:#0a7;font-weight:700">저장 완료</span>';
+    await loadAccounts();
+  } catch(e){
+    qs('#msg').innerHTML = '<span style="color:#c00;font-weight:700">실패: '+e+'</span>';
+  }
+}
+
 async function saveAccount(){
-  const payload={ type:'account_upsert', data:{ UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, items:collectItems() } };
-  const out=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-  if(out.status==='ok'){ qs('#msg').innerHTML='<span style="color:#0a7;font-weight:600">저장 완료</span>'; loadAccounts(); }
-  else { qs('#msg').innerHTML='<span style="color:#c00;font-weight:600">실패: '+(out.message||'알 수 없는 오류')+'</span>'; }
+  const token = getToken();
+  const data = { UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, items:collectItems() };
+  if(!data.UID){ alert('UID를 입력하세요.'); return; }
+  const payload = { type:'account_upsert', data, secret: token };
+  await upsert(payload);
 }
+
 async function deleteAccount(){
-  const uid=qs('#uid').value.trim();
-  if(!uid){ alert('UID를 입력하세요.'); return; }
+  const token = getToken();
+  const uid=qs('#uid').value.trim(); if(!uid){ alert('UID를 입력하세요.'); return; }
   if(!confirm('정말 삭제하시겠어요?')) return;
-  const payload={ type:'account_delete', data:{ UID:uid } };
-  const out=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-  if(out.status==='ok'){ qs('#msg').innerHTML='<span style="color:#0a7;font-weight:600">삭제 완료</span>'; loadAccounts(); }
-  else { qs('#msg').innerHTML='<span style="color:#c00;font-weight:600">실패: '+(out.message||'알 수 없는 오류')+'</span>'; }
+  const payload = { type:'account_delete', data:{ UID: uid }, secret: token };
+  try{
+    const out = await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    qs('#msg').innerHTML = '<span style="color:#0a7;font-weight:700">삭제 완료</span>';
+    await loadAccounts();
+  } catch(e){
+    qs('#msg').innerHTML = '<span style="color:#c00;font-weight:700">실패: '+e+'</span>';
+  }
 }
+
 qs('#save').addEventListener('click', saveAccount);
 qs('#delete').addEventListener('click', deleteAccount);
-(async function init(){ await loadItems(); await loadAccounts(); })();
+
+// 로그인
+qs('#login').addEventListener('click', async ()=>{
+  const pw = qs('#pw').value.trim();
+  if(!pw){ qs('#authMsg').textContent='비밀번호를 입력하세요.'; return; }
+  if(pw !== ADMIN_PASSWORD){ qs('#authMsg').textContent='비밀번호가 틀렸습니다.'; return; }
+  // 서버 동기화(ADMIN_SECRET 있을 경우) - 실패 무시
+  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'auth_check', secret: pw }) }); }catch(_e){}
+  saveToken(pw);
+  qs('#authPanel').style.display='none';
+  qs('#main').style.display='block';
+  await loadItems(); await loadAccounts();
+});
+
+// 자동 로그인
+(function init(){
+  const t = getToken();
+  if(t && t === ADMIN_PASSWORD){
+    qs('#authPanel').style.display='none';
+    qs('#main').style.display='block';
+    loadItems(); loadAccounts();
+  } else {
+    qs('#authPanel').style.display='block';
+    qs('#main').style.display='none';
+  }
+})();
 </script>
 </body>
 </html>
