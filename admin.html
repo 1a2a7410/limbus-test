@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>관리자 - 림버스 (비밀번호 필요)</title>
+<title>관리자 - 림버스 (이미지 자동 업로드)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
@@ -16,10 +16,10 @@
   .panel { border:1px solid var(--border); padding:16px; border-radius:14px; background:#fff; margin-bottom:16px; box-shadow: 0 8px 20px rgba(25,25,60,.04); }
   label { display:block; margin:10px 0 6px; font-weight:600; }
   input, textarea, select { width:100%; padding:10px; border:1px solid #d9d9e6; border-radius:10px; background:#fff; }
-  .row { display:grid; grid-template-columns: 1fr 2fr 1fr; gap:12px; }
+  .row { display:grid; grid-template-columns: 1fr 2fr 1fr 1fr; gap:12px; }
   .btn { padding:10px 14px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
   .btn.secondary { background:#fff; color:var(--primary); }
-  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:10px; background:#fff; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:10px; background:#fff; }
   .item { display:flex; gap:8px; align-items:center; }
   .item img { width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
   table { width:100%; border-collapse: collapse; background:#fff; border-radius:10px; overflow:hidden; }
@@ -28,13 +28,14 @@
   .pill { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:2px 8px; margin:2px; font-size:12px; background:#fafafa; }
   .right { text-align:right; }
   .muted { color:#666; font-size:12px; }
+  .auth { max-width:420px; margin:auto; }
 </style>
 </head>
 <body>
   <div class="wrap">
     <h1>관리자 (비밀번호 필요)</h1>
 
-    <div id="authPanel" class="panel">
+    <div id="authPanel" class="panel auth">
       <h2 style="margin-top:0">비밀번호 입력</h2>
       <label>관리자 비밀번호</label>
       <input id="pw" type="password" placeholder="비밀번호">
@@ -45,6 +46,26 @@
     </div>
 
     <div id="main" style="display:none;">
+
+      <div class="panel">
+        <h2 style="margin-top:0">아이템 자동 업로드</h2>
+        <div style="display:grid; grid-template-columns:1.5fr 2fr 1fr; gap:12px;">
+          <div>
+            <label>아이템명</label>
+            <input id="item-name" placeholder="예: 가시 오랏줄">
+          </div>
+          <div>
+            <label>이미지 파일</label>
+            <input id="item-file" type="file" accept="image/*">
+          </div>
+          <div style="align-self:end; display:flex; gap:8px;">
+            <button id="item-upload" class="btn" type="button">업로드/저장</button>
+            <button id="item-delete" class="btn secondary" type="button">삭제</button>
+          </div>
+        </div>
+        <div id="item-msg" class="muted" style="margin-top:8px;"></div>
+      </div>
+
       <div class="panel">
         <h2 style="margin-top:0">계정 추가/수정</h2>
         <div class="row">
@@ -63,6 +84,10 @@
               <option>판매완료</option>
             </select>
           </div>
+          <div>
+            <label>가격(원)</label>
+            <input id="price" type="number" inputmode="numeric" min="0" step="100" placeholder="예: 15000">
+          </div>
         </div>
 
         <label>포함 아이템 (여러개 선택)</label>
@@ -73,14 +98,14 @@
           <button id="delete" class="btn secondary" type="button">삭제</button>
           <div id="msg" style="margin-left:8px;"></div>
         </div>
-        <div class="muted">※ 수정 시: 아래 목록에서 "편집"을 눌러 불러온 뒤 저장하세요.</div>
+        <div class="muted">※ 수정: 아래 목록의 "편집"을 눌러 불러온 뒤 저장하세요.</div>
       </div>
 
       <div class="panel">
         <h2 style="margin-top:0">계정 목록</h2>
         <table>
           <thead>
-            <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>아이템</th><th class="right">작업</th></tr>
+            <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>가격</th><th>아이템</th><th class="right">작업</th></tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -98,83 +123,65 @@ function getToken(){ return localStorage.getItem('limbus_admin_token') || ''; }
 function qs(s){ return document.querySelector(s); }
 async function fetchJSON(u,opt){ const r=await fetch(u,opt); if(!r.ok) throw new Error(r.status); return r.json(); }
 
+// 아이템 UI/연동
 async function loadItems(){ const items=await fetchJSON(`${API_BASE}?sheet=items`); const box=qs('#items'); box.innerHTML='';
   items.forEach(it=>{ const row=document.createElement('label'); row.className='item';
     row.innerHTML=`<input type='checkbox' value='${it["아이템명"]}'><img src='${it["이미지URL"]}' alt='${it["아이템명"]}'><span>${it["아이템명"]}</span>`; box.appendChild(row); });
 }
-function fillForm(acc){ qs('#uid').value=acc["UID"]||''; qs('#desc').value=acc["부가설명"]||''; qs('#status').value=acc["판매상태"]||'판매중';
+
+async function itemUpload(){ const name=qs('#item-name').value.trim(); const file=qs('#item-file').files[0]; if(!name||!file){ qs('#item-msg').textContent='아이템명과 파일을 선택하세요.'; return; }
+  const fr=new FileReader(); fr.onload=async ()=>{ const dataUrl=fr.result; const base64=dataUrl.split(',')[1]; const mime=(file.type||'image/jpeg'); const filename=file.name|| (name+'.jpg');
+    try{ const res=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        type:'item_upload', data:{ name, filename, mime, base64 }, secret:getToken()
+    }) }); qs('#item-msg').innerHTML = `<span style='color:#0a7'>업로드 완료</span> - URL: ${res.url||''}`; await loadItems(); }catch(e){ qs('#item-msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
+  }; fr.readAsDataURL(file);
+}
+
+async function itemDelete(){ const name=qs('#item-name').value.trim(); if(!name){ qs('#item-msg').textContent='아이템명을 입력하세요.'; return; }
+  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'item_delete', data:{ name }, secret:getToken() }) });
+    qs('#item-msg').innerHTML = "<span style='color:#0a7'>삭제 완료</span>"; await loadItems(); }catch(e){ qs('#item-msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
+}
+
+// 계정 CRUD
+function fillForm(acc){ qs('#uid').value=acc["UID"]||''; qs('#desc').value=acc["부가설명"]||''; qs('#status').value=acc["판매상태"]||'판매중'; qs('#price').value=acc["가격"]||'';
   const vals=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>acc[k]);
   document.querySelectorAll('#items input[type=checkbox]').forEach(ch=> ch.checked = vals.includes(ch.value));
 }
 async function loadAccounts(){ const list=await fetchJSON(`${API_BASE}?sheet=accounts`); const tb=qs('#tbody'); tb.innerHTML='';
   list.forEach(acc=>{ const items=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>`<span class='pill'>${acc[k]}</span>`).join('');
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${acc["UID"]||''}</td><td>${acc["부가설명"]||''}</td><td>${acc["판매상태"]||''}</td><td>${items}</td><td class='right'><button class='btn secondary' data-uid='${acc["UID"]}'>편집</button></td>`;
+    tr.innerHTML=`<td>${acc["UID"]||''}</td><td>${acc["부가설명"]||''}</td><td>${acc["판매상태"]||''}</td><td>${acc["가격"]||''}</td><td>${items}</td><td class='right'><button class='btn secondary' data-uid='${acc["UID"]}'>편집</button></td>`;
     tr.querySelector('button').addEventListener('click', ()=> fillForm(acc)); tb.appendChild(tr); });
 }
 
 function collectItems(){ return Array.from(document.querySelectorAll('#items input:checked')).map(i=>i.value); }
 
-async function upsert(payload){ 
-  try{
-    const out = await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    qs('#msg').innerHTML = '<span style="color:#0a7;font-weight:700">저장 완료</span>';
-    await loadAccounts();
-  } catch(e){
-    qs('#msg').innerHTML = '<span style="color:#c00;font-weight:700">실패: '+e+'</span>';
-  }
-}
-
-async function saveAccount(){
-  const token = getToken();
-  const data = { UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, items:collectItems() };
+async function upsertAccount(){ const data={ UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, price:Number(qs('#price').value||0), items:collectItems() };
   if(!data.UID){ alert('UID를 입력하세요.'); return; }
-  const payload = { type:'account_upsert', data, secret: token };
-  await upsert(payload);
+  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'account_upsert', data, secret:getToken() }) });
+    qs('#msg').innerHTML = "<span style='color:#0a7'>저장 완료</span>"; await loadAccounts(); }catch(e){ qs('#msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
 }
 
-async function deleteAccount(){
-  const token = getToken();
-  const uid=qs('#uid').value.trim(); if(!uid){ alert('UID를 입력하세요.'); return; }
+async function deleteAccount(){ const uid=qs('#uid').value.trim(); if(!uid){ alert('UID를 입력하세요.'); return; }
   if(!confirm('정말 삭제하시겠어요?')) return;
-  const payload = { type:'account_delete', data:{ UID: uid }, secret: token };
-  try{
-    const out = await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    qs('#msg').innerHTML = '<span style="color:#0a7;font-weight:700">삭제 완료</span>';
-    await loadAccounts();
-  } catch(e){
-    qs('#msg').innerHTML = '<span style="color:#c00;font-weight:700">실패: '+e+'</span>';
-  }
+  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'account_delete', data:{ UID:uid }, secret:getToken() }) });
+    qs('#msg').innerHTML = "<span style='color:#0a7'>삭제 완료</span>"; await loadAccounts(); }catch(e){ qs('#msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
 }
 
-qs('#save').addEventListener('click', saveAccount);
+qs('#save').addEventListener('click', upsertAccount);
 qs('#delete').addEventListener('click', deleteAccount);
+qs('#item-upload').addEventListener('click', itemUpload);
+qs('#item-delete').addEventListener('click', itemDelete);
 
 // 로그인
-qs('#login').addEventListener('click', async ()=>{
-  const pw = qs('#pw').value.trim();
-  if(!pw){ qs('#authMsg').textContent='비밀번호를 입력하세요.'; return; }
-  if(pw !== ADMIN_PASSWORD){ qs('#authMsg').textContent='비밀번호가 틀렸습니다.'; return; }
-  // 서버 동기화(ADMIN_SECRET 있을 경우) - 실패 무시
+qs('#login').addEventListener('click', async ()=>{ const pw=qs('#pw').value.trim(); if(!pw){ qs('#authMsg').textContent='비밀번호를 입력하세요.'; return; }
+  if(pw!=="050200"){ qs('#authMsg').textContent='비밀번호가 틀렸습니다.'; return; }
   try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'auth_check', secret: pw }) }); }catch(_e){}
-  saveToken(pw);
-  qs('#authPanel').style.display='none';
-  qs('#main').style.display='block';
-  await loadItems(); await loadAccounts();
+  saveToken(pw); qs('#authPanel').style.display='none'; qs('#main').style.display='block'; await loadItems(); await loadAccounts();
 });
 
 // 자동 로그인
-(function init(){
-  const t = getToken();
-  if(t && t === ADMIN_PASSWORD){
-    qs('#authPanel').style.display='none';
-    qs('#main').style.display='block';
-    loadItems(); loadAccounts();
-  } else {
-    qs('#authPanel').style.display='block';
-    qs('#main').style.display='none';
-  }
-})();
+(function init(){ const t=getToken(); if(t && t==="050200"){ qs('#authPanel').style.display='none'; qs('#main').style.display='block'; loadItems(); loadAccounts(); } })();
 </script>
 </body>
 </html>
