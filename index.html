@@ -1,59 +1,84 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>림버스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#ffffff; --fg:#111; --muted:#666; --border:#e5e5e5; --primary:#111; --sold:#c62828; }
+  :root { --bg:#f7f7fb; --card:#ffffff; --fg:#1a1a1a; --muted:#667085; --border:#e7e7ef; --primary:#1f1f3a; --accent:#4b61ff; --sold:#c62828; }
   * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background:var(--bg); color:var(--fg); }
-  h1 { text-align: center; font-size: 40px; margin: 0 0 16px; }
-  .toolbar { display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap; margin-bottom: 16px; }
-  #selected-items { font-size:14px; color:var(--muted); }
-  #items { display:grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap:12px; max-width: 1100px; margin: 0 auto 24px; }
-  .card { border:1px solid var(--border); border-radius:10px; padding:8px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .1s ease; background:#fff; }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-  .card img { width:100%; height:100px; object-fit:cover; border-radius:8px; }
-  .name { margin-top:6px; font-size:14px; }
-  .selected { outline: 3px solid #ff4d4f; }
-  .btn { padding:10px 16px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:8px; cursor:pointer; font-weight:600; }
+  html, body { height: 100%; }
+  body { font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: linear-gradient(180deg,#fafafe,#f6f7fc); color:var(--fg); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(250,250,254,.8); border-bottom: 1px solid var(--border); z-index: 10; }
+  .hdr-in { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 14px 24px; }
+  h1 { font-size: clamp(28px, 3vw, 40px); margin: 0; letter-spacing: .5px; }
+  .help-btn { border:1px solid var(--accent); background: var(--accent); color:#fff; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; }
+  .toolbar { display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:center; padding: 12px 24px; }
+  .filters { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+  #selected-items { font-size:14px; color:var(--muted); min-height: 28px; }
+  .btn { padding:10px 16px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
   .btn.secondary { background:#fff; color:var(--primary); }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
-  #results { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:16px; max-width: 1100px; margin: 24px auto; }
-  .account { position:relative; border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; text-align:left; }
-  .account.hint { }
+  .input { padding:10px 12px; border:1px solid var(--border); border-radius:10px; min-width: 160px; }
+  .check { display:flex; gap:6px; align-items:center; font-size:14px; color:#384055; }
+  /* Grid: responsive columns */
+  #items { display:grid; gap:12px; margin: 12px auto 24px; max-width: 1000px; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 640px) { #items { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { #items { grid-template-columns: repeat(4, 1fr); } }
+  .card { border:1px solid var(--border); border-radius:14px; padding:10px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .2s ease; background:var(--card); }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(25,25,60,.06); }
+  /* Responsive image height (smaller on mobile) */
+  .card img { width:100%; height: 90px; object-fit:cover; border-radius:10px; }
+  @media (min-width:640px){ .card img { height: 120px; } }
+  @media (min-width:1024px){ .card img { height: 150px; } }
+  .name { margin-top:8px; font-size:14px; font-weight:600; }
+  .selected { outline: 3px solid #7f8cff; outline-offset: 2px; }
+  /* Results */
+  #results { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:16px; margin: 18px auto 48px; }
+  .account { position:relative; border:1px solid var(--border); border-radius:16px; padding:14px; background:var(--card); text-align:left; box-shadow: 0 8px 20px rgba(25,25,60,.04); }
   .account h3 { margin:0 0 8px; font-size:16px; }
   .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
-  .thumbs img { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+  .thumbs img { width:56px; height:56px; object-fit:cover; border-radius:10px; border:1px solid #eee; }
   .chip { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:4px 10px; margin:2px; font-size:12px; background:#fafafa; }
-  .soldout::after {
-    content: "판매완료";
-    position:absolute; top:12px; right:-12px;
-    background: var(--sold); color:#fff; font-size:12px; font-weight:700;
-    padding:6px 10px; border-radius:999px; transform: rotate(6deg);
-  }
+  .soldout::after { content: "판매완료"; position:absolute; top:12px; right:-10px; background: var(--sold); color:#fff; font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; transform: rotate(6deg); }
   .sold-dim { opacity:.55; filter: grayscale(0.2); }
-  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:24px; }
-  .modal { width: min(720px, 95vw); background:#fff; border-radius:14px; border:1px solid var(--border); padding:16px; }
+  /* Modal (detail & help) */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(16,18,36,.55); display:none; align-items:center; justify-content:center; padding:24px; z-index:100; }
+  .modal { width: min(820px, 96vw); background:var(--card); border-radius:16px; border:1px solid var(--border); padding:16px; box-shadow: 0 24px 40px rgba(20,20,60,.18); }
   .modal header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .modal .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:12px; }
-  .modal .tile { border:1px solid var(--border); border-radius:10px; padding:8px; text-align:center; }
-  .modal .tile img { width:100%; height:100px; object-fit:cover; border-radius:8px; }
+  .modal .tile { border:1px solid var(--border); border-radius:12px; padding:8px; text-align:center; background: #fff; }
+  .modal .tile img { width:100%; height:120px; object-fit:cover; border-radius:10px; }
+  .help-list { line-height: 1.65; color:#384055; font-size: 14.5px; padding-left: 20px; }
 </style>
 </head>
 <body>
-  <h1 id="game-title"></h1>
-  <div class="toolbar">
-    <div id="selected-items"></div>
-    <button id="clear-btn" class="btn secondary" type="button">선택 해제</button>
-    <button id="search-btn" class="btn" type="button" disabled>검색</button>
-  </div>
+  <header>
+    <div class="hdr-in">
+      <h1 id="game-title"></h1>
+      <button id="help-btn" class="help-btn" type="button">설명서</button>
+    </div>
+    <div class="toolbar">
+      <div id="selected-items"></div>
+      <div class="filters">
+        <input id="uid-input" class="input" type="search" inputmode="numeric" placeholder="UID 검색" />
+        <label class="check"><input id="hide-sold" type="checkbox"> 판매완료 숨기기</label>
+        <button id="search-btn" class="btn" type="button" disabled>검색</button>
+        <button id="clear-btn" class="btn secondary" type="button">선택 해제</button>
+      </div>
+    </div>
+  </header>
 
-  <div id="items"></div>
-  <div id="results"></div>
+  <main class="container">
+    <div id="items"></div>
+    <div id="results"></div>
+  </main>
 
+  <!-- 상세 모달 -->
   <div id="backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
     <div class="modal">
       <header>
@@ -65,66 +90,231 @@
     </div>
   </div>
 
+  <!-- 설명서 모달 -->
+  <div id="help-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <header>
+        <h2 style="margin:0;font-size:18px;">사이트 사용법</h2>
+        <button id="close-help" class="btn secondary" type="button">닫기</button>
+      </header>
+      <ol class="help-list">
+        <li>상단의 아이템 카드에서 원하는 항목을 눌러 선택합니다. (여러 개 선택 가능)</li>
+        <li>선택한 항목은 상단에 칩 형태로 표시됩니다. 잘못 선택했으면 다시 눌러 해제하세요.</li>
+        <li>필요하면 우측 <strong>UID 검색</strong>과 <strong>판매완료 숨기기</strong> 옵션을 사용하세요.</li>
+        <li><strong>검색</strong>을 누르면 선택한 모든 아이템을 포함하고, UID/판매상태 조건에 맞는 계정만 표시됩니다.</li>
+        <li>각 계정 카드의 <strong>자세히 보기</strong>를 누르면 아이템 큰 이미지와 설명을 확인할 수 있습니다.</li>
+        <li>관리자 페이지에서 계정을 <strong>추가/수정/삭제</strong>할 수 있습니다. (판매완료 표시는 공개 화면에 자동 반영)</li>
+      </ol>
+    </div>
+  </div>
+
 <script>
 const API_BASE = "https://script.google.com/macros/s/AKfycbx9v5WxjwxfPIPJ_hyfVZylrTtPfzPkazxHl5tuFBIkxDL7lX4suC10JequWg4J6TVR6Q/exec";
 
+// === 데모 데이터(아이템 10개) ===
+const demoItems = [
+  ["가시 오랏줄","https://i.ibb.co/vxcDGYv4/IMG-7140.jpg"],
+  ["부적 묶음","https://i.ibb.co/N6N6DJk9/IMG-7141.jpg"],
+  ["통상 배터리","https://i.ibb.co/SXZqvpjt/IMG-7142.jpg"],
+  ["황홀경","https://i.ibb.co/84jSQN7R/IMG-7143.jpg"],
+  ["벼락가지","https://i.ibb.co/SwDr4HcP/IMG-7144.jpg"],
+  ["닭가슴살","https://i.ibb.co/DHR122sF/IMG-7145.jpg"],
+  ["해진 우산","https://i.ibb.co/fJgynPd/IMG-7146.jpg"],
+  ["깨진 안경","https://i.ibb.co/zHtDKYLZ/IMG-7147.jpg"],
+  ["편지","https://i.ibb.co/Fb7d8DwC/IMG-7148.jpg"],
+  ["브로치","https://i.ibb.co/TBxRmqst/IMG-7149.jpg"]
+].map(([n,u])=>({ "아이템명": n, "이미지URL": u }));
+
+// === 데모 계정 20개 ===
+const demoAccounts = [
+  {{UID:"1001",부가설명:"초보용 패키지",판매상태:"판매중", items:["가시 오랏줄","부적 묶음","통상 배터리"]}},
+  {{UID:"1002",부가설명:"균형형",판매상태:"판매완료", items:["황홀경","벼락가지","브로치"]}},
+  {{UID:"1003",부가설명:"속도세팅",판매상태:"판매중", items:["통상 배터리","깨진 안경","브로치"]}},
+  {{UID:"1004",부가설명:"방어특화",판매상태:"판매중", items:["해진 우산","부적 묶음","편지"]}},
+  {{UID:"1005",부가설명:"화력형",판매상태:"판매완료", items:["벼락가지","가시 오랏줄","황홀경"]}},
+  {{UID:"1006",부가설명:"균형+지원",판매상태:"판매중", items:["편지","브로치","닭가슴살"]}},
+  {{UID:"1007",부가설명:"지원형",판매상태:"판매중", items:["해진 우산","편지","통상 배터리"]}},
+  {{UID:"1008",부가설명:"치명타 세팅",판매상태:"판매완료", items:["깨진 안경","브로치","황홀경"]}},
+  {{UID:"1009",부가설명:"안정형",판매상태:"판매중", items:["부적 묶음","편지","닭가슴살"]}},
+  {{UID:"1010",부가설명:"속도+지원",판매상태:"판매중", items:["통상 배터리","해진 우산","브로치"]}},
+  {{UID:"1011",부가설명:"전기속성",판매상태:"판매완료", items:["벼락가지","통상 배터리","깨진 안경"]}},
+  {{UID:"1012",부가설명:"방어+회복",판매상태:"판매중", items:["해진 우산","닭가슴살","부적 묶음"]}},
+  {{UID:"1013",부가설명:"화력 확장",판매상태:"판매중", items:["가시 오랏줄","황홀경","브로치","편지"]}},
+  {{UID:"1014",부가설명:"지원 확장",판매상태:"판매완료", items:["편지","해진 우산","부적 묶음"]}},
+  {{UID:"1015",부가설명:"속도 극대화",판매상태:"판매중", items:["통상 배터리","깨진 안경","편지"]}},
+  {{UID:"1016",부가설명:"치명+화력",판매상태:"판매중", items:["깨진 안경","황홀경","가시 오랏줄"]}},
+  {{UID:"1017",부가설명:"전술형",판매상태:"판매완료", items:["부적 묶음","해진 우산","브로치"]}},
+  {{UID:"1018",부가설명:"올인원",판매상태:"판매중", items:["가시 오랏줄","부적 묶음","통상 배터리","황홀경"]}},
+  {{UID:"1019",부가설명:"회복 중심",판매상태:"판매중", items:["닭가슴살","편지","해진 우산"]}},
+  {{UID:"1020",부가설명:"균형 최신",판매상태:"판매완료", items:["브로치","벼락가지","통상 배터리"]}}
+].map(a=>({{ "UID":a.UID, "부가설명":a.부가설명, "판매상태":a.판매상태,
+  "포함아이템1":a.items[0]||"", "포함아이템2":a.items[1]||"", "포함아이템3":a.items[2]||"",
+  "포함아이템4":a.items[3]||"", "포함아이템5":a.items[4]||"" }}));
+
 let selected = [];
 let itemData = [];
+let accountsCache = [];
 
-const el = (s)=>document.querySelector(s);
-async function fetchJSON(u,o){ const r=await fetch(u,o); if(!r.ok) throw new Error(r.status); return r.json(); }
-async function loadGameTitle(){ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText=d[0]?.["게임제목"]||"림버스"; }
-async function loadItems(){
-  itemData = await fetchJSON(`${API_BASE}?sheet=items`);
-  const c = el('#items'); c.innerHTML='';
-  itemData.forEach(it=>{
-    const b=document.createElement('button'); b.type='button'; b.className='card'; b.dataset.name=it["아이템명"];
-    b.onclick=()=>toggleSelect(it["아이템명"]);
-    b.innerHTML=`<img src="${it["이미지URL"]}" alt="${it["아이템명"]}"><div class='name'>${it["아이템명"]}</div>`;
-    c.appendChild(b);
-  });
-}
-function toggleSelect(n){ if(selected.includes(n)) selected=selected.filter(x=>x!==n); else selected.push(n); renderSelected(); }
-function renderSelected(){
-  el('#selected-items').innerHTML = selected.length? selected.map(n=>`<span class='chip'>${n}</span>`).join('') : '아이템을 선택하세요';
-  el('#search-btn').disabled = selected.length===0;
-  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('selected', selected.includes(c.dataset.name)));
-}
-async function searchAccounts(){
-  const accounts = await fetchJSON(`${API_BASE}?sheet=accounts`);
-  const filtered = accounts.filter(acc=> selected.every(sel=>Object.values(acc).includes(sel)));
-  const map = Object.fromEntries(itemData.map(it=>[it["아이템명"], it["이미지URL"]]));
-  const results = el('#results'); results.innerHTML='';
-  if(!filtered.length){ results.innerHTML='<p>조건에 맞는 계정이 없습니다.</p>'; return; }
-  filtered.forEach(acc=>{
-    const sold = (acc["판매상태"]||'').trim()==='판매완료';
-    const div = document.createElement('div'); div.className='account'+(sold?' soldout sold-dim':'');
-    div.innerHTML = `<h3>${acc["UID"]} - ${acc["부가설명"]||''}</h3>`;
-    const thumbs = document.createElement('div'); thumbs.className='thumbs';
-    const names = [];
-    Object.keys(acc).forEach(k=>{
-      if(k.startsWith('포함아이템') && acc[k]){
-        names.push(acc[k]); const url=map[acc[k]]; if(url){ const img=document.createElement('img'); img.src=url; img.alt=acc[k]; img.title=acc[k]; thumbs.appendChild(img); }
-      }
-    });
-    const more=document.createElement('button'); more.className='btn secondary'; more.type='button'; more.textContent='자세히 보기';
-    more.addEventListener('click', ()=>openDetail(acc, names));
-    div.appendChild(thumbs); div.appendChild(more); results.appendChild(div);
-  });
-}
-function openDetail(acc, names){
-  const map = Object.fromEntries(itemData.map(it=>[it["아이템명"], it["이미지URL"]]));
-  el('#detail-title').textContent=`UID ${acc["UID"]}${(acc["판매상태"]||'')==='판매완료'?' · 판매완료':''}`;
-  el('#detail-desc').textContent=acc["부가설명"]||'';
-  const g=el('#detail-grid'); g.innerHTML='';
-  names.forEach(nm=>{ const url=map[nm]; const t=document.createElement('div'); t.className='tile'; t.innerHTML=`<img src="${url}" alt="${nm}"><div style='margin-top:6px;font-size:13px;'>${nm}</div>`; g.appendChild(t); });
-  el('#backdrop').style.display='flex';
-}
-el('#close-modal').addEventListener('click', ()=> el('#backdrop').style.display='none');
-el('#backdrop').addEventListener('click', (e)=>{ if(e.target.id==='backdrop') el('#backdrop').style.display='none'; });
+const el = (sel) => document.querySelector(sel);
+
+async function fetchJSON(url, opts) {{
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error('API 요청 실패: ' + res.status);
+  return res.json();
+}}
+
+async function loadGameTitle() {{
+  try {{
+    const data = await fetchJSON(`${{API_BASE}}?sheet=game`);
+    el('#game-title').innerText = data[0]?.["게임제목"] || "림버스";
+  }} catch(_e) {{
+    el('#game-title').innerText = "림버스";
+  }}
+}}
+
+async function loadItems() {{
+  try {{
+    itemData = await fetchJSON(`${{API_BASE}}?sheet=items`);
+    if(!Array.isArray(itemData) || itemData.length===0) throw new Error();
+  }} catch(_e) {{
+    itemData = demoItems; // fallback
+  }}
+  const container = el('#items');
+  container.innerHTML = '';
+  itemData.forEach(item => {{
+    const card = document.createElement('button');
+    card.type = "button";
+    card.className = "card";
+    card.setAttribute('data-name', item["아이템명"]);
+    card.onclick = () => toggleSelect(item["아이템명"]);
+    card.innerHTML = `
+      <img src="${{item["이미지URL"]}}" alt="${{item["아이템명"]}}">
+      <div class="name">${{item["아이템명"]}}</div>
+    `;
+    container.appendChild(card);
+  }});
+}}
+
+function toggleSelect(name) {{
+  if (selected.includes(name)) {{
+    selected = selected.filter(n => n !== name);
+  }} else {{
+    selected.push(name);
+  }}
+  renderSelected();
+}}
+
+function renderSelected() {{
+  const chips = selected.map(n => `<span class="chip">${{n}}</span>`).join('');
+  el('#selected-items').innerHTML = chips || '아이템을 선택하세요';
+  el('#search-btn').disabled = selected.length === 0;
+  document.querySelectorAll('.card').forEach(c => {{
+    const n = c.getAttribute('data-name');
+    c.classList.toggle('selected', selected.includes(n));
+  }});
+}}
+
+function applyFilters(accounts) {{
+  const q = el('#uid-input').value.trim();
+  const hideSold = el('#hide-sold').checked;
+  return accounts.filter(acc => {{
+    const values = Object.values(acc);
+    const itemsOK = selected.every(sel => values.includes(sel));
+    if (!itemsOK) return false;
+    const uid = (acc["UID"] || "").toString();
+    if (q && !uid.includes(q)) return false;
+    if (hideSold && (acc["판매상태"]||"").trim()==="판매완료") return false;
+    return true;
+  }});
+}}
+
+async function searchAccounts() {{
+  try {{
+    accountsCache = await fetchJSON(`${{API_BASE}}?sheet=accounts`);
+    if(!Array.isArray(accountsCache) || accountsCache.length===0) throw new Error();
+  }} catch(_e) {{
+    accountsCache = demoAccounts; // fallback
+  }}
+  const filtered = applyFilters(accountsCache);
+  const byName = Object.fromEntries(itemData.map(it => [it["아이템명"], it["이미지URL"]]));
+
+  const results = el('#results');
+  results.innerHTML = '';
+  if (filtered.length === 0) {{
+    results.innerHTML = '<p>조건에 맞는 계정이 없습니다.</p>';
+    return;
+  }}
+
+  filtered.forEach(acc => {{
+    const isSold = (acc["판매상태"] || "").trim() === "판매완료";
+    const div = document.createElement('div');
+    div.className = 'account' + (isSold ? ' soldout sold-dim' : '');
+    div.innerHTML = `<h3>${{acc["UID"]}} - ${{acc["부가설명"] || ""}}</h3>`;
+
+    const thumbs = document.createElement('div');
+    thumbs.className = 'thumbs';
+
+    const itemNames = [];
+    Object.keys(acc).forEach(k => {{
+      if (k.startsWith('포함아이템') && acc[k]) {{
+        const nm = acc[k]; itemNames.push(nm);
+        const url = byName[nm];
+        if (url) {{
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = nm;
+          img.title = nm;
+          thumbs.appendChild(img);
+        }}
+      }}
+    }});
+
+    const more = document.createElement('button');
+    more.className = 'btn secondary';
+    more.type = 'button';
+    more.textContent = '자세히 보기';
+    more.addEventListener('click', () => openDetail(acc, itemNames));
+
+    div.appendChild(thumbs);
+    div.appendChild(more);
+    results.appendChild(div);
+  }});
+}}
+
+function openDetail(acc, itemNames) {{
+  const byName = Object.fromEntries(itemData.map(it => [it["아이템명"], it["이미지URL"]]));
+  el('#detail-title').textContent = `UID ${{acc["UID"]}}${{(acc["판매상태"]||'')==='판매완료' ? ' · 판매완료' : ''}}`;
+  el('#detail-desc').textContent = acc["부가설명"] || '';
+  const grid = el('#detail-grid');
+  grid.innerHTML = '';
+  itemNames.forEach(nm => {{
+    const url = byName[nm];
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.innerHTML = `<img src="${{url}}" alt="${{nm}}"><div style="margin-top:6px;font-size:13px;">${{nm}}</div>`;
+    grid.appendChild(tile);
+  }});
+  el('#backdrop').style.display = 'flex';
+}}
+
+el('#close-modal').addEventListener('click', () => el('#backdrop').style.display = 'none');
+el('#backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') el('#backdrop').style.display = 'none'; });
+
 el('#search-btn').addEventListener('click', searchAccounts);
-el('#clear-btn').addEventListener('click', ()=>{ selected=[]; renderSelected(); });
-loadGameTitle(); loadItems(); renderSelected();
+el('#clear-btn').addEventListener('click', () => { selected = []; renderSelected(); });
+el('#uid-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); searchAccounts(); } });
+el('#hide-sold').addEventListener('change', ()=>{ if(selected.length>0) searchAccounts(); });
+
+// Help modal
+el('#help-btn').addEventListener('click', ()=> el('#help-backdrop').style.display = 'flex');
+el('#close-help').addEventListener('click', ()=> el('#help-backdrop').style.display = 'none');
+el('#help-backdrop').addEventListener('click', (e)=>{ if(e.target.id==='help-backdrop') el('#help-backdrop').style.display='none'; });
+
+(async function init(){
+  await loadGameTitle();
+  await loadItems();
+  renderSelected();
+})();
 </script>
 </body>
 </html>
