@@ -32,7 +32,7 @@
   .acc { border:1px solid var(--line); background:#fff; border-radius:12px; padding:12px; }
   .acc h3 { margin:0 0 8px; font-size:16px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
   .acc h3 .uid { font-weight:800; cursor:pointer; }
-  .acc h3 .uid:hover { color:var(--accent); text-decoration:underline; }
+  .acc h3 .uid:hover { color:#0ea5e9; text-decoration:underline; }
   .price { font-weight:800; color:#111827; }
   .thumbs { display:flex; gap:6px; flex-wrap:wrap; }
   .thumbs img { width:48px; height:48px; border-radius:8px; object-fit:cover; background:#f3f4f6; }
@@ -65,7 +65,15 @@
   .help-body em { font-style:normal; color:#111827; font-weight:700; }
   .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:#111827; color:#fff; padding:10px 14px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none; transition:.25s; z-index:60; }
   .toast.on { opacity:1; }
-  .flash { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#10b981; color:#fff; padding:12px 18px; border-radius:12px; font-weight:800; box-shadow:0 6px 24px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition: opacity .4s ease; z-index:200; }
+  /* Softer success palette for the flash */
+  .flash {
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:#d4edda; color:#155724; border:1px solid #c3e6cb;
+    padding:10px 14px; border-radius:10px; font-weight:800;
+    box-shadow:0 6px 24px rgba(0,0,0,.12);
+    opacity:0; pointer-events:none; transition: opacity .25s ease;
+    z-index:200;
+  }
   .flash.on { opacity:1; }
 </style>
 </head>
@@ -99,6 +107,7 @@
   <div id="accounts" class="accounts"></div>
 </main>
 
+<!-- 상세보기 모달 -->
 <div id="modal" class="modal" aria-hidden="true">
   <div class="box">
     <header>
@@ -111,6 +120,7 @@
   </div>
 </div>
 
+<!-- 구매 가이드 모달 -->
 <div id="help-modal" class="modal" aria-hidden="true">
   <div class="box">
     <header>
@@ -284,7 +294,8 @@ function doneFlash(){
   const f = el('#flash'); if(!f) return;
   f.classList.add('on');
   clearTimeout(doneFlash._t);
-  doneFlash._t = setTimeout(()=>{ f.classList.remove('on'); }, 1000);
+  // Show ~600ms then fade (CSS .25s)
+  doneFlash._t = setTimeout(()=>{ f.classList.remove('on'); }, 600);
 }
 
 function renderAccounts(list){
