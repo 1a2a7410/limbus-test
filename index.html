@@ -19,11 +19,12 @@
   .counts { margin-left:auto; font-size:13px; color:#374151; }
   .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
   .chip { background:#f0fdf4; color:#065f46; border:1px solid #bbf7d0; border-radius:999px; padding:4px 8px; font-size:12px; }
-  main { padding:12px 14px 90px; }
+  main { padding:12px 14px 120px; }
   .grid { display:grid; gap:10px; }
   @media (max-width:480px) { .grid { grid-template-columns: repeat(5, 1fr); } }
   @media (min-width:481px) and (max-width:900px) { .grid { grid-template-columns: repeat(8, 1fr); } }
   @media (min-width:901px) { .grid { grid-template-columns: repeat(10, 1fr); } }
+  .hint { color:#6b7280; padding:10px 0 0; }
   .item { border:1px solid var(--line); border-radius:10px; background:#fff; padding:6px; display:flex; flex-direction:column; gap:6px; align-items:center; cursor:pointer; }
   .item img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; background:#f3f4f6; }
   .item small { color:#6b7280; font-size:11px; text-align:center; }
@@ -36,6 +37,7 @@
   .price { font-weight:800; color:#111827; }
   .thumbs { display:flex; gap:6px; flex-wrap:wrap; }
   .thumbs img { width:48px; height:48px; border-radius:8px; object-fit:cover; background:#f3f4f6; }
+  .more-thumbs { font-size:12px; color:#6b7280; }
   .sold { opacity:.55 }
   .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); color:#374151; background:#f8fafc; }
   .mut { color:#6b7280; }
@@ -65,23 +67,17 @@
   .help-body em { font-style:normal; color:#111827; font-weight:700; }
   .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:#111827; color:#fff; padding:10px 14px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none; transition:.25s; z-index:60; }
   .toast.on { opacity:1; }
-  /* Softer success palette for the flash */
-  .flash {
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  .flash { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
     background:#d4edda; color:#155724; border:1px solid #c3e6cb;
     padding:10px 14px; border-radius:10px; font-weight:800;
     box-shadow:0 6px 24px rgba(0,0,0,.12);
-    opacity:0; pointer-events:none; transition: opacity .25s ease;
-    z-index:200;
-  }
+    opacity:0; pointer-events:none; transition: opacity .25s ease; z-index:200; }
   .flash.on { opacity:1; }
-  .hint { color:#6b7280; font-size:13px; margin-top:6px; }
-  .spinner { display:none; gap:8px; align-items:center; color:#374151; }
-  .spinner.on { display:flex; }
-  .spdot { width:8px; height:8px; border-radius:50%; background:#0f172a; opacity:.2; animation: bl 1s infinite alternate; }
-  .spdot:nth-child(2){ animation-delay:.15s }
-  .spdot:nth-child(3){ animation-delay:.3s }
-  @keyframes bl { to { opacity:1 } }
+  .spinner { display:inline-flex; gap:4px; align-items:center; color:#374151; font-size:13px; }
+  .dot { width:6px; height:6px; border-radius:50%; background:#9ca3af; animation:b 1s infinite alternate; }
+  .dot:nth-child(2){ animation-delay:.15s;} .dot:nth-child(3){ animation-delay:.3s;}
+  @keyframes b { from{opacity:.2; transform:translateY(0)} to{opacity:1; transform:translateY(-2px)} }
+  .sentinel { height: 1px; }
 </style>
 </head>
 <body>
@@ -104,16 +100,17 @@
     <div id="counts" class="counts">총 매물 – | 결과 –</div>
   </div>
   <div id="chips" class="chips"></div>
-  <div id="hint" class="hint">필터를 선택한 뒤 <strong>검색</strong>을 누르면 매물을 불러옵니다.</div>
-  <div id="spin" class="spinner"><div class="spdot"></div><div class="spdot"></div><div class="spdot"></div><span>불러오는 중…</span></div>
 </header>
 
 <main>
+  <div id="pre-hint" class="hint">필터 선택 후 <b>검색</b>을 누르면 매물을 불러옵니다.</div>
+
   <h2 style="font-size:16px;margin:10px 0 6px;">아이템</h2>
   <div id="items" class="grid"></div>
 
   <h2 style="font-size:16px;margin:16px 0 6px;">계정</h2>
   <div id="accounts" class="accounts"></div>
+  <div id="sentinel" class="sentinel"></div>
 </main>
 
 <!-- 상세보기 모달 -->
@@ -129,71 +126,44 @@
   </div>
 </div>
 
-<!-- 구매 가이드 모달 -->
-<div id="help-modal" class="modal" aria-hidden="true">
-  <div class="box">
-    <header>
-      <h3><span>사용 설명서</span></h3>
-      <button id="close-help" class="close" type="button">닫기</button>
-    </header>
-    <div class="help-body">
-      <h2 style="margin:0;font-size:18px;">구매 가이드</h2>
-      <ol class="help-list">
-        <li><strong>캐릭터 선택</strong>: 상단 카드에서 원하는 캐릭터를 눌러 선택하세요. 여러 개 선택하면 <em>해당 캐릭터를 모두 포함</em>하는 계정만 검색됩니다.</li>
-        <li><strong>UID/판매상태/정렬</strong>:
-          <ul>
-            <li>UID: 판매자가 관리용으로 붙인 고유 번호입니다. 일부 숫자만 입력해도 포함 검색됩니다.</li>
-            <li>판매완료 숨기기: 이미 판매된 계정을 리스트에서 숨깁니다.</li>
-            <li>정렬: 가격 또는 포함 캐릭터 수 기준으로 오름/내림차순 정렬합니다.</li>
-          </ul>
-        </li>
-        <li><strong>검색 & 확인</strong>:
-          <ul>
-            <li>검색 결과 카드에서 <em>자세히 보기</em>를 통해 포함 캐릭터와 <strong>가격</strong>, 부가설명을 확인하세요.</li>
-            <li>원하는 계정의 uid를 복사하거나 스크린샷을 찍어 판매자의 오픈카카오톡이나 아이디팜으로 문의주세요.</li>
-          </ul>
-        </li>
-        <li><strong>주의 사항</strong>:
-          <ul>
-            <li>상세한 캐릭터 목록 및 아이템 현황은 실시간으로 변경될 수 있습니다.</li>
-            <li>구매후 24시간 이전에 발생한 문제에 대해서는 보상을 해 드리며, 24시간 이후에 발생한 문제에 대해서는 책임지지 않습니다.</li>
-          </ul>
-        </li>
-      </ol>
-    </div>
-  </div>
-</div>
+<!-- 도움/문의 플로팅 버튼은 이전과 동일하게 필요시 추가 가능 -->
 
 <div id="toast" class="toast">복사됨</div>
 <div id="flash" class="flash">검색완료</div>
 
-<div class="fab">
-  <button class="btn-lg" id="help">사용 설명서</button>
-  <a class="btn-lg secondary" id="contact" href="#" target="_blank" rel="noopener">구매 문의</a>
-</div>
-
 <script>
 const API_BASE = "https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec";
-const KAKAO_LINK = "https://open.kakao.com/o/sENDKZBh";
+const PAGE_SIZE = 30;
+const MAX_THUMBS = 8;
 const PLACEHOLDER = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23eef'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%23999'>no image</text></svg>";
 
-// lazy load for images
-const io = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      const img=e.target; const src=img.getAttribute('data-src');
-      if(src){ img.src=src; img.removeAttribute('data-src'); }
-      io.unobserve(img);
-    }
-  });
-}, { rootMargin: '200px 0px' });
-
+// sanitize URL
 function cleanUrl(u){
   if(!u) return u;
   const q = u.indexOf('?');
   if (q > -1) u = u.slice(0, q);
-  if (/(\.jrg)$/i.test(u)) u = u.replace(/(\.jrg)$/i, '.jpg');
+  if (/\.(jrg)$/i.test(u)) u = u.replace(/\.(jrg)$/i, '.jpg');
   return u;
+}
+
+// lazy loader
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el = e.target;
+      const src = el.getAttribute('data-src');
+      if(src){ el.src = src; el.removeAttribute('data-src'); }
+      io.unobserve(el);
+    }
+  });
+}, { rootMargin: "400px" });
+
+function lazyImg(img){
+  if(!img) return;
+  if('loading' in HTMLImageElement.prototype){
+    // browser native lazy loading still uses src, keep data-src for fallback
+  }
+  io.observe(img);
 }
 
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -212,44 +182,24 @@ async function j(url, opt={}, tries=2){
   }finally{ clearTimeout(t); }
 }
 
+let itemsLoaded = false;
+let accountsLoaded = false;
 let itemMap = new Map();
-let accounts = [];    // 전체 계정 데이터 (첫 검색 때 로드)
-let loadedOnce = false;
+let accounts = [];
 let selected = new Set();
+let currentFiltered = [];
+let page = 0;
 
 function el(q){ return document.querySelector(q); }
 function h(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+function showFlash(){ const f = el('#flash'); f.classList.add('on'); setTimeout(()=>f.classList.remove('on'), 600); }
+function showToast(msg='복사됨'){ const t = el('#toast'); t.textContent = msg; t.classList.add('on'); setTimeout(()=> t.classList.remove('on'), 1100); }
+function updateCounts(total, matched){ el('#counts').textContent = `총 매물 ${total} | 결과 ${matched}`; }
 
-function updateCounts(total, matched){ el('#counts').textContent = `총 매물 ${total || 0} | 결과 ${matched || 0}`; }
 function updateChips(){
   const box = el('#chips'); box.innerHTML = '';
   if(selected.size===0) return;
   selected.forEach(name=>{ box.appendChild(h(`<span class="chip">${name}</span>`)); });
-}
-
-function renderItemsFromAccounts(){
-  // 아이템 목록은 accounts 기반 → 아직 계정 미로딩이면 건너뜀
-  if(!loadedOnce || accounts.length===0){ el('#items').innerHTML=''; return; }
-  const s = new Set();
-  accounts.forEach(a => { for (let i=1;i<=12;i++){ const v=(a["포함아이템"+i]||"").toString().trim(); if(v) s.add(v); } });
-  const list = Array.from(s).map(n => ({ "아이템명": n, "이미지URL": (itemMap.get(n)||"") }));
-  const box = el('#items'); box.innerHTML = '';
-  list.forEach(it=>{
-    const img = cleanUrl((it["이미지URL"]||"").toString().trim());
-    const name = it["아이템명"];
-    const card = h(`<div class="item" data-name="${name}">
-      <img loading="lazy" decoding="async" referrerpolicy="no-referrer" data-src="${img||PLACEHOLDER}" alt="${name||''}">
-      <small>${name||''}</small>
-    </div>`);
-    if(selected.has(name)) card.classList.add('selected');
-    card.addEventListener('click', ()=>{ 
-      if(selected.has(name)) selected.delete(name); else selected.add(name);
-      card.classList.toggle('selected');
-      updateChips();
-    });
-    box.appendChild(card);
-    const im = card.querySelector('img'); io.observe(im);
-  });
 }
 
 function itemsFromAccount(acc){
@@ -286,57 +236,38 @@ function sortResults(list){
   return ext.map(x=>x.a);
 }
 
-function openModal(acc){
-  const names = itemsFromAccount(acc);
-  const grid = el('#detail-grid'); grid.innerHTML = '';
-  names.forEach(n=>{
-    const url = cleanUrl(itemMap.get(n)||PLACEHOLDER);
-    const card = h(`
-      <div class="card">
-        <img loading="lazy" decoding="async" data-src="${url}" alt="${n}">
-        <small>${n}</small>
-      </div>
-    `);
-    grid.appendChild(card);
-    io.observe(card.querySelector('img'));
+function renderItemsFromAccounts(){
+  const s = new Set();
+  accounts.forEach(a => { for (let i=1;i<=12;i++){ const v=(a["포함아이템"+i]||"").toString().trim(); if(v) s.add(v); } });
+  const list = Array.from(s).map(n => ({ "아이템명": n, "이미지URL": (itemMap.get(n)||"") }));
+  const box = el('#items'); box.innerHTML = '';
+  list.forEach(it=>{
+    const imgUrl = cleanUrl((it["이미지URL"]||"").toString().trim());
+    const name = it["아이템명"];
+    const card = h(`<div class="item" data-name="${name}">
+      <img loading="lazy" decoding="async" referrerpolicy="no-referrer" data-src="${imgUrl||PLACEHOLDER}" alt="${name||''}" onerror="this.src='${PLACEHOLDER}'">
+      <small>${name||''}</small>
+    </div>`);
+    if(selected.has(name)) card.classList.add('selected');
+    card.addEventListener('click', ()=>{ 
+      if(selected.has(name)) selected.delete(name); else selected.add(name);
+      card.classList.toggle('selected');
+      updateChips();
+    });
+    box.appendChild(card);
+    lazyImg(card.querySelector('img'));
   });
-  el('#modal-title').textContent = `${acc["UID"]||""} 상세보기`;
-  el('#modal').classList.add('on');
-  el('#modal').setAttribute('aria-hidden','false');
 }
 
-function closeModal(){
-  el('#modal').classList.remove('on');
-  el('#modal').setAttribute('aria-hidden','true');
-}
-
-function openHelp(){
-  el('#help-modal').classList.add('on');
-  el('#help-modal').setAttribute('aria-hidden','false');
-}
-function closeHelp(){
-  el('#help-modal').classList.remove('on');
-  el('#help-modal').setAttribute('aria-hidden','true');
-}
-
-function showToast(msg='복사됨'){
-  const t = el('#toast'); t.textContent = msg; t.classList.add('on');
-  setTimeout(()=> t.classList.remove('on'), 1100);
-}
-
-function doneFlash(){
-  const f = el('#flash'); if(!f) return;
-  f.classList.add('on');
-  clearTimeout(doneFlash._t);
-  doneFlash._t = setTimeout(()=>{ f.classList.remove('on'); }, 600);
-}
-
-function renderAccounts(list){
-  const box = el('#accounts'); box.innerHTML = '';
-  if(!list.length){ box.innerHTML = '<p class="mut">조건에 맞는 계정이 없습니다.</p>'; updateCounts(accounts.length, 0); return; }
-  list.forEach(acc=>{
+function renderPage(chunk){
+  const box = el('#accounts');
+  chunk.forEach(acc=>{
     const names = itemsFromAccount(acc);
-    const thumbs = names.map(n=>{ const url = cleanUrl(itemMap.get(n)||PLACEHOLDER); return `<img loading="lazy" decoding="async" data-src="${url}" alt="${n}" title="${n}">`; }).join('');
+    const thumbs = names.slice(0, MAX_THUMBS).map(n=>{
+      const url = cleanUrl(itemMap.get(n) || PLACEHOLDER);
+      return `<img loading="lazy" decoding="async" data-src="${url}" alt="${n}" onerror="this.src='${PLACEHOLDER}'" title="${n}">`;
+    }).join('');
+    const more = names.length > MAX_THUMBS ? `<span class="more-thumbs">+${names.length - MAX_THUMBS}</span>` : '';
     const sold = (acc["판매상태"]||"") === "판매완료";
     const price = Number(acc["가격"]||0).toLocaleString('ko-KR');
     const desc = (acc["부가설명"]||"");
@@ -353,66 +284,119 @@ function renderAccounts(list){
           <span class="mut">· 아이템 ${names.length}개</span>
           <button class="btn small detail-btn" data-uid="${uid}">상세보기</button>
         </div>
-        <div class="thumbs">${thumbs}</div>
+        <div class="thumbs">${thumbs} ${more}</div>
       </div>
     `);
     card.querySelector('.uid').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(uid); showToast('UID 복사됨'); }catch{ showToast('복사 실패'); } });
     card.querySelector('.detail-btn').addEventListener('click', ()=> openModal(acc));
     box.appendChild(card);
-    card.querySelectorAll('img').forEach(im=> io.observe(im));
+    // lazy observe thumbs
+    card.querySelectorAll('img[data-src]').forEach(lazyImg);
   });
-  updateCounts(accounts.length, list.length);
 }
 
-async function firstLoadIfNeeded(){
-  if(loadedOnce) return;
-  // 첫 검색 시: items + accounts를 로드
-  const spin = el('#spin'); spin.classList.add('on');
+function resetList(){
+  el('#accounts').innerHTML = '';
+  page = 0;
+}
+
+function paginateAndRender(){
+  const start = page * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const slice = currentFiltered.slice(start, end);
+  renderPage(slice);
+  page++;
+}
+
+function attachInfiniteScroll(){
+  const sentinel = document.getElementById('sentinel');
+  if (attachInfiniteScroll._observer) attachInfiniteScroll._observer.disconnect();
+  attachInfiniteScroll._observer = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if (e.isIntersecting){
+        const loaded = page * PAGE_SIZE;
+        if (loaded < currentFiltered.length){
+          paginateAndRender();
+        }
+      }
+    });
+  }, { rootMargin: "600px" });
+  attachInfiniteScroll._observer.observe(sentinel);
+}
+
+function openModal(acc){
+  const names = itemsFromAccount(acc);
+  const grid = el('#detail-grid'); grid.innerHTML = '';
+  names.forEach(n=>{
+    const url = cleanUrl(itemMap.get(n)||PLACEHOLDER);
+    const node = h(`
+      <div class="card">
+        <img loading="lazy" decoding="async" data-src="${url}" alt="${n}" onerror="this.src='${PLACEHOLDER}'">
+        <small>${n}</small>
+      </div>
+    `);
+    grid.appendChild(node);
+    lazyImg(node.querySelector('img'));
+  });
+  el('#modal-title').textContent = `${acc["UID"]||""} 상세보기`;
+  el('#modal').classList.add('on');
+  el('#modal').setAttribute('aria-hidden','false');
+}
+function closeModal(){ el('#modal').classList.remove('on'); el('#modal').setAttribute('aria-hidden','true'); }
+
+async function loadItemsOnce(){
+  if (itemsLoaded) return;
   try{
-    const [items, acc] = await Promise.all([
-      j(API_BASE + "?sheet=items"),
-      j(API_BASE + "?sheet=accounts")
-    ]);
+    const items = await j(API_BASE + "?sheet=items");
     itemMap = new Map(items.map(it=>[it["아이템명"], cleanUrl((it["이미지URL"]||"").toString().trim())]));
-    accounts = acc || [];
-    loadedOnce = true;
-  }finally{
-    spin.classList.remove('on');
-  }
-  renderItemsFromAccounts();
+    itemsLoaded = true;
+  }catch(e){ console.warn('items load failed', e); itemMap = new Map(); itemsLoaded = true; }
 }
 
-function doSearch(){
-  firstLoadIfNeeded().then(()=>{
-    const filtered = sortResults(applyFilters(accounts));
-    renderAccounts(filtered);
-    el('#hint').style.display = 'none';
-    doneFlash();
-  }).catch(err=>{
-    console.error(err);
-  });
+async function loadAccountsOnce(){
+  if (accountsLoaded) return;
+  try{
+    accounts = await j(API_BASE + "?sheet=accounts");
+    accountsLoaded = true;
+  }catch(e){ console.warn('accounts load failed', e); accounts = []; accountsLoaded = true; }
+}
+
+async function firstSearch(){
+  el('#pre-hint').innerHTML = '<span class="spinner"><span class="dot"></span><span class="dot"></span><span class="dot"></span> 불러오는 중…</span>';
+  await Promise.all([loadItemsOnce(), loadAccountsOnce()]);
+  renderItemsFromAccounts();
+  runSearch();
+}
+
+function runSearch(){
+  currentFiltered = sortResults(applyFilters(accounts));
+  resetList();
+  paginateAndRender();
+  updateCounts(accounts.length, currentFiltered.length);
+  showFlash();
 }
 
 [['#sort','change'], ['#uid-q','input'], ['#hide-sold','change']].forEach(([q,evt])=>{
   const node = el(q); if(!node) return;
-  node.addEventListener(evt, ()=>{ if(!loadedOnce) return; renderAccounts(sortResults(applyFilters(accounts))); doneFlash(); });
+  node.addEventListener(evt, ()=>{ if(!accountsLoaded) return; runSearch(); });
 });
 
-el('#btn-search').addEventListener('click', doSearch);
+document.getElementById('btn-search').addEventListener('click', ()=>{
+  if(!accountsLoaded){ firstSearch().then(attachInfiniteScroll); }
+  else { runSearch(); }
+});
 
-el('#btn-clear').addEventListener('click', ()=>{ selected.clear(); updateChips(); renderItemsFromAccounts(); if(loadedOnce) renderAccounts(sortResults(applyFilters(accounts))); });
+document.getElementById('btn-clear').addEventListener('click', ()=>{
+  selected.clear(); updateChips();
+  if(accountsLoaded){
+    renderItemsFromAccounts();
+    runSearch();
+  }
+});
 
-document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeModal(); closeHelp(); } });
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', (e)=>{ if(e.target.id==='modal') closeModal(); });
-
-document.getElementById('help').addEventListener('click', (e)=>{ e.preventDefault(); openHelp(); });
-document.getElementById('close-help').addEventListener('click', (e)=>{ e.preventDefault(); closeHelp(); });
-document.getElementById('help-modal').addEventListener('click', (e)=>{ if(e.target.id==='help-modal') closeHelp(); });
-document.getElementById('contact').setAttribute('href', KAKAO_LINK);
-
-// 초기에는 accounts를 로드/표시하지 않음. 힌트만 보여줌.
-updateCounts(0, 0);
 </script>
 </body>
 </html>
