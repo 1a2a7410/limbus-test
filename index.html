@@ -130,6 +130,11 @@
 </div>
 
 <div id="toast" class="toast">복사됨</div>
+<div id="flash-center" style="
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  background:#10b981; color:#fff; padding:12px 18px; border-radius:12px; 
+  font-weight:800; box-shadow:0 6px 24px rgba(0,0,0,.18);
+  opacity:0; pointer-events:none; transition:.18s; z-index:200;">검색완료</div>
 
 <button class="help" id="help" type="button">설명서</button>
 
@@ -233,6 +238,12 @@ function showToast(msg='복사됨'){
   const t = el('#toast'); t.textContent = msg; t.classList.add('on');
   setTimeout(()=> t.classList.remove('on'), 1100);
 }
+function doneFlash(){
+  const f = el('#flash-center'); if(!f) return;
+  f.style.opacity = 1;
+  clearTimeout(doneFlash._t);
+  doneFlash._t = setTimeout(()=>{ f.style.opacity = 0; }, 1000);
+}
 
 function renderAccounts(list){
   const box = el('#accounts'); box.innerHTML = '';
@@ -279,14 +290,14 @@ async function loadAll(){
     accounts = await j(API_BASE + "?sheet=accounts");
   }catch(e){ console.warn('accounts load failed', e); }
   renderItems(Array.from(itemMap, ([name, url])=>({ "아이템명":name, "이미지URL":url })));
-  renderAccounts(sortResults(applyFilters(accounts)));
+  renderAccounts(sortResults(applyFilters(accounts))); doneFlash();
 }
 
 ['#refresh','#sort','#uid-q','#hide-sold'].forEach(q=>{
   const node = el(q);
   if(!node) return;
   const evt = (q==='#sort' || q==='#hide-sold') ? 'change' : (q==='#refresh'?'click':'input');
-  node.addEventListener(evt, ()=> renderAccounts(sortResults(applyFilters(accounts))));
+  node.addEventListener(evt, ()=> { renderAccounts(sortResults(applyFilters(accounts))); doneFlash(); doneFlash(); });
 });
 
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeModal(); closeHelp(); } });
