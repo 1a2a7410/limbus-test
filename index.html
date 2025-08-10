@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>림버스</title>
+<title>테스트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
@@ -166,7 +166,7 @@ const safeNum = (v)=> isNaN(Number(v)) ? 0 : Number(v);
 function safeImg(url){ if(!url) return PLACEHOLDER; try{ new URL(url) }catch(e){ return PLACEHOLDER }; if(!/^https:/i.test(url)) return PLACEHOLDER; return url; }
 async function fetchJSON(url, opts){ const res=await fetch(url,opts); if(!res.ok) throw new Error('API '+res.status); return res.json(); }
 
-async function loadGameTitle(){ try{ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText = d[0]?.["게임제목"] || "림버스"; }catch(_ ){ el('#game-title').innerText="림버스"; } }
+async function loadGameTitle(){ try{ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText = d[0]?.["게임제목"] || "테스트"; }catch(_ ){ el('#game-title').innerText="테스트"; } }
 
 async function loadItems(){ const d=await fetchJSON(`${API_BASE}?sheet=items`); itemData = Array.isArray(d)&&d.length? d: []; const box=el('#items'); box.innerHTML='';
   itemData.forEach(it=>{ const b=document.createElement('button'); b.type='button'; b.className='card'; b.dataset.name=it["아이템명"]; b.onclick=()=>toggleSelect(it["아이템명"]);
