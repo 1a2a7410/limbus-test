@@ -15,12 +15,11 @@
   input[type=text]{ padding:10px 12px; border:1px solid var(--line); border-radius:10px; min-width:160px; }
   select, button { padding:10px 12px; border:1px solid var(--pri); border-radius:10px; background:var(--pri); color:#fff; font-weight:700; cursor:pointer; }
   select { background:#fff; color:#0f172a; border-color:var(--line); }
+  .btn.secondary { background:#fff; color:#0f172a; border:1px solid var(--line); }
   label.chk { display:flex; align-items:center; gap:6px; font-size:13px; color:#6b7280; }
   .counts { margin-left:auto; font-size:13px; color:#374151; }
   .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
   .chip { background:#f0fdf4; color:#065f46; border:1px solid #bbf7d0; border-radius:999px; padding:4px 8px; font-size:12px; }
-
-  .btn.secondary { background:#fff; color:#0f172a; border:1px solid var(--line); }
 
   main { padding:12px 14px 90px; }
   .grid { display:grid; gap:10px; }
@@ -79,6 +78,12 @@
   .help-list li { margin:6px 0; }
   .help-list ul { margin:6px 0 8px 18px; }
   .help-body em { font-style:normal; color:#111827; font-weight:700; }
+
+  /* Initial overlay spinner */
+  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; gap:12px; background:#ffffff; z-index:120; }
+  .spinner { width:26px; height:26px; border-radius:50%; border:3px solid #e5e7eb; border-top-color:#0ea5e9; animation:spin 0.9s linear infinite; }
+  .overlay .txt { color:#0f172a; font-weight:800; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -140,8 +145,8 @@
         </li>
         <li><strong>검색 & 확인</strong>:
           <ul>
-            <li>검색 결과 카드에서 <em>자세히 보기</em>를 통해 포함 캐릭터와 <strong>가격</strong>, 부가설명을 확인하세요.</li>
-            <li>원하는 계정의 uid를 복사하거나 스크린샷을 찍어 판매자의 오픈카카오톡으로 문의하세요.</li>
+            <li>검색 결과 카드에서 포함 캐릭터와 <strong>가격</strong>, 부가설명을 확인하세요.</li>
+            <li>원하는 계정의 uid를 복사한 뒤 판매자의 오픈카카오톡으로 문의하세요.</li>
           </ul>
         </li>
         <li><strong>주의 사항</strong>:
@@ -153,6 +158,12 @@
       </ol>
     </div>
   </div>
+</div>
+
+<!-- Initial overlay -->
+<div id="overlay" class="overlay" aria-hidden="false">
+  <div class="spinner" aria-hidden="true"></div>
+  <div class="txt" aria-live="polite">로딩중</div>
 </div>
 
 <script>
@@ -169,17 +180,19 @@ let accounts = null; // 처음엔 불러오지 않음
 let selected = new Set();
 
 function updateCounts(total, matched){ el('#counts').textContent = `총 매물 ${total ?? '–'} | 결과 ${matched ?? '–'}`; }
-function updateChips(){ const box = el('#chips'); box.innerHTML=''; if(selected.size===0) return; selected.forEach(n=> box.appendChild(h(`<span class="chip">${n}</span>`))); }
+function updateChips(){ const box = el('#chips'); box.innerHTML=''; if(selected.size===0) return; selected.forEach(n=> box.appendChild(h(`<span class="chip">{n}</span>`.replace('{n}', n)))); }
 
 function renderItems(list){
   const box = el('#items'); box.innerHTML='';
   list.forEach(it => {
     const name = it['아이템명'] || it['name'] || '';
     const img  = cleanUrl((it['이미지URL'] || it['url'] || '').toString().trim());
-    const card = h(`<div class="item" data-name="{name}">
-      <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="{img}" alt="{name}" onerror="this.src='{PLACEHOLDER}'">
+    const tpl = `<div class="item" data-name="{name}">
+      <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="{img}" alt="{name}" onerror="this.src='{PH}'">
       <small>{name}</small>
-    </div>`.replace(/{name}/g, name).replace(/{img}/g, img || PLACEHOLDER).replace(/{PLACEHOLDER}/g, PLACEHOLDER));
+    </div>`;
+    const html = tpl.replace(/{name}/g, name).replace(/{img}/g, img || PLACEHOLDER).replace(/{PH}/g, PLACEHOLDER);
+    const card = h(html);
     if(selected.has(name)) card.classList.add('selected');
     card.addEventListener('click', ()=>{
       if(selected.has(name)) selected.delete(name); else selected.add(name);
@@ -187,6 +200,9 @@ function renderItems(list){
     });
     box.appendChild(card);
   });
+  // hide initial overlay once items are rendered
+  const ov = document.getElementById('overlay');
+  if (ov) { ov.style.display = 'none'; ov.setAttribute('aria-hidden','true'); }
 }
 
 function itemsFromAccount(acc){
@@ -274,7 +290,7 @@ function renderAccounts(list){
 async function fetchJSON(url){
   const r = await fetch(url, { headers: { 'Content-Type':'text/plain;charset=utf-8' } });
   const txt = await r.text();
-  try{ return JSON.parse(txt); }catch{ throw new Error('JSON parse error: '+txt.slice(0,200)); }
+  try{ return JSON.parse(txt); }catch(e){ throw new Error('JSON parse error: '+txt.slice(0,200)); }
 }
 
 async function loadItems(){
