@@ -2,204 +2,344 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>관리자 페이지</title>
+<title>관리자 페이지 (모바일 최적화)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { font-size: 22px; }
-    .input-group { margin-bottom: 10px; }
-    label { display: inline-block; width: 100px; font-weight: bold; }
-    input, textarea, select { padding: 5px; margin-right: 10px; }
-    button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
-    .btn-primary { background-color: #007bff; color: white; }
-    .btn-danger { background-color: #dc3545; color: white; }
-    .btn-secondary { background-color: #6c757d; color: white; }
-    #log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; background: #f9f9f9; }
-    .log-entry { margin-bottom: 5px; }
-    .log-time { color: #888; font-size: 12px; margin-right: 5px; }
-    .log-success { color: green; }
-    .log-error { color: red; }
+  :root{
+    --bg:#f8fafc; --panel:#ffffff; --line:#e5e7eb; --fg:#0f172a; --mut:#6b7280;
+    --pri:#2563eb; --pri-txt:#fff; --danger:#dc2626; --ok:#16a34a; --chip:#eef2ff; --chip-on:#dbeafe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Arial,sans-serif; background:var(--bg); color:var(--fg)}
+  header{position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--line); padding:12px 14px}
+  h1{margin:0; font-size:18px}
+  main{padding:12px 14px 90px; max-width:920px; margin:0 auto}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0}
+  .row{display:flex; gap:10px; align-items:center; margin:10px 0}
+  .row > label{min-width:86px; font-size:13px; color:var(--mut)}
+  input[type=text],input[type=password],input[type=number],textarea,select{
+    width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:15px
+  }
+  textarea{min-height:84px; resize:vertical}
+  .btn{padding:12px 14px; border:none; border-radius:10px; font-weight:800; cursor:pointer}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .btn-primary{background:var(--pri); color:var(--pri-txt)}
+  .btn-secondary{background:#eef2f7; color:#111827}
+  .btn-danger{background:var(--danger); color:#fff}
+  .mut{color:var(--mut); font-size:12px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{padding:8px 10px; border:1px solid var(--line); border-radius:999px; background:var(--chip); font-size:13px; cursor:pointer; user-select:none}
+  .chip.on{background:var(--chip-on); border-color:#bfdbfe}
+  .hint{font-size:12px; color:var(--mut); margin-top:6px}
+  .grid2{display:grid; grid-template-columns:1fr; gap:10px}
+  @media(min-width:700px){ .grid2{grid-template-columns:1fr 1fr} }
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#f8fafc; font-size:12px}
+  .ok{color:var(--ok)}
+  .danger{color:var(--danger)}
+  .log{background:#0b1220; color:#d1d5db; border-radius:10px; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; height:160px; overflow:auto}
+  .log .t{color:#94a3b8}
+  .fixed-actions{position:fixed; left:0; right:0; bottom:0; padding:10px 14px; background:#fffffff2; backdrop-filter:saturate(1.1) blur(6px); border-top:1px solid var(--line); display:flex; gap:8px; z-index:20}
+  .fixed-actions .btn{flex:1}
+  .tabs{display:flex; gap:6px; margin:8px 0 2px}
+  .tab{flex:1; text-align:center; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; font-weight:800}
+  .tab.on{background:#eff6ff; border-color:#bfdbfe; color:#1e40af}
+  .badge{display:inline-block; background:#f1f5f9; border:1px solid var(--line); padding:2px 8px; border-radius:999px; font-size:12px; color:#334155; margin-left:6px}
 </style>
 </head>
 <body>
+<header>
+  <h1>관리자(모바일 최적화)</h1>
+  <div class="mut">비밀번호 인증 후 사용 · 신규 추가는 기존 데이터 보존</div>
+</header>
 
-<h1>관리자 페이지</h1>
+<main>
+  <!-- 1) 인증 -->
+  <section class="card" id="auth-card">
+    <div class="row">
+      <label>웹앱 주소</label>
+      <input id="api" type="text" value="https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec">
+    </div>
+    <div class="row">
+      <label>비밀번호</label>
+      <input id="secret" type="password" placeholder="ADMIN_SECRET (예: 050200)">
+    </div>
+    <div class="toolbar">
+      <button id="btn-auth" class="btn btn-primary">인증 확인</button>
+      <span id="auth-state" class="pill">상태: 대기</span>
+    </div>
+    <div class="hint">인증 성공 후 자동으로 아이템/계정 목록을 불러옵니다.</div>
+  </section>
 
-<div class="input-group">
-    <label>비밀번호</label>
-    <input type="password" id="adminSecret">
-    <button class="btn-primary" onclick="authCheck()">인증</button>
-</div>
+  <!-- 2) 아이템 선택(칩) -->
+  <section class="card">
+    <div class="toolbar">
+      <strong>아이템 선택</strong><span class="badge">최대 10개</span>
+    </div>
+    <div id="items-chips" class="chips"></div>
+    <div class="hint">터치하여 선택/해제. 선택된 아이템은 아래 신규/수정 모두에 사용됩니다.</div>
+  </section>
 
-<h2>아이템 추가</h2>
-<div class="input-group">
-    <label>아이템명</label>
-    <input type="text" id="itemName">
-</div>
-<div class="input-group">
-    <label>이미지</label>
-    <input type="file" id="itemImage">
-</div>
-<button class="btn-primary" onclick="uploadItem()">아이템 업로드</button>
+  <!-- 3) 신규 추가 vs 수정 -->
+  <section class="card">
+    <div class="tabs">
+      <div id="tab-add" class="tab on">신규 추가</div>
+      <div id="tab-edit" class="tab">기존 수정</div>
+    </div>
 
-<h2>계정 추가</h2>
-<div class="input-group">
-    <label>UID</label>
-    <input type="text" id="uid">
-</div>
-<div class="input-group">
-    <label>설명</label>
-    <textarea id="desc"></textarea>
-</div>
-<div class="input-group">
-    <label>판매상태</label>
-    <select id="status">
-        <option value="판매중">판매중</option>
-        <option value="판매완료">판매완료</option>
-    </select>
-</div>
-<div class="input-group">
-    <label>가격</label>
-    <input type="number" id="price">
-</div>
-<div class="input-group">
-    <label>포함아이템</label>
-    <input type="text" id="items" placeholder="콤마로 구분">
-</div>
-<button class="btn-primary" onclick="upsertAccount()">계정 저장</button>
+    <!-- 신규 추가 -->
+    <div id="pane-add" class="grid2">
+      <div class="row"><label>UID</label><input id="add-uid" type="text" placeholder="예: 12001"></div>
+      <div class="row"><label>가격</label><input id="add-price" type="number" inputmode="numeric" placeholder="예: 45000"></div>
+      <div class="row"><label>설명</label><textarea id="add-desc" placeholder="예: 뽑기권 100장"></textarea></div>
+      <div class="row"><label>판매상태</label>
+        <select id="add-status">
+          <option value="판매중">판매중</option>
+          <option value="판매완료">판매완료</option>
+        </select>
+      </div>
+      <div class="row"><label>충돌 처리</label>
+        <label class="pill"><input id="auto-uid" type="checkbox"> 중복 UID면 새 UID 자동 생성</label>
+      </div>
+      <div class="hint">※ 기존 UID와 겹치면 기본적으로 저장 거부합니다. 자동 생성 옵션을 켜면 충돌 시 새 UID를 발급해 저장합니다.</div>
+    </div>
 
-<h2>계정 삭제</h2>
-<div class="input-group">
-    <label>UID</label>
-    <input type="text" id="deleteUid">
-</div>
-<button class="btn-danger" onclick="deleteAccount()">계정 삭제</button>
+    <!-- 기존 수정 -->
+    <div id="pane-edit" class="grid2" style="display:none">
+      <div class="row"><label>UID 찾기</label><input id="edit-uid" type="text" placeholder="수정할 UID 입력"><button id="btn-load-one" class="btn btn-secondary" style="white-space:nowrap">불러오기</button></div>
+      <div class="row"><label>가격</label><input id="edit-price" type="number" inputmode="numeric" placeholder="예: 55000"></div>
+      <div class="row"><label>설명</label><textarea id="edit-desc" placeholder="내용 수정"></textarea></div>
+      <div class="row"><label>판매상태</label>
+        <select id="edit-status">
+          <option value="판매중">판매중</option>
+          <option value="판매완료">판매완료</option>
+        </select>
+      </div>
+      <div class="hint">※ 위에서 선택한 아이템 칩이 수정 대상 계정의 포함 아이템으로 반영됩니다.</div>
+    </div>
+  </section>
 
-<h2>로그</h2>
-<div id="log"></div>
+  <!-- 4) 삭제 -->
+  <section class="card">
+    <div class="row"><label>UID 삭제</label><input id="del-uid" type="text" placeholder="삭제할 UID 입력"></div>
+    <div class="toolbar"><button id="btn-delete" class="btn btn-danger">계정 삭제</button></div>
+  </section>
+
+  <!-- 5) 로그 -->
+  <section class="card">
+    <div class="toolbar"><strong>로그</strong><span id="counts" class="pill">계정 – / 아이템 –</span></div>
+    <div id="log" class="log" aria-live="polite"></div>
+  </section>
+</main>
+
+<!-- 고정 하단 액션 -->
+<div class="fixed-actions">
+  <button id="btn-save-add" class="btn btn-primary">신규 저장</button>
+  <button id="btn-save-edit" class="btn btn-secondary">수정 저장</button>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec";
-let adminSecret = "";
+const state = {
+  api: '',
+  secret: '',
+  items: [],         // [{아이템명, 이미지URL}]
+  accounts: [],      // [{UID, ...}]
+  selectedItems: new Set(), // 칩 선택
+  uidSet: new Set(), // 중복 체크용
+};
 
-// 로그 함수
-function log(message, type = "success") {
-    const logDiv = document.getElementById("log");
-    const time = new Date().toLocaleTimeString();
-    const entry = document.createElement("div");
-    entry.className = "log-entry";
-    entry.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${message}</span>`;
-    logDiv.appendChild(entry);
-    logDiv.scrollTop = logDiv.scrollHeight;
+const $ = (q)=>document.querySelector(q);
+const apiEl = $('#api'); const secEl = $('#secret');
+const logEl = $('#log'); const countsEl = $('#counts');
+
+function log(msg, kind='info'){
+  const t = new Date().toLocaleTimeString();
+  const color = kind==='ok'?'#86efac': kind==='err'?'#fca5a5':'#cbd5e1';
+  logEl.innerHTML += `<div><span class="t">[${t}]</span> <span style="color:${color}">${msg}</span></div>`;
+  logEl.scrollTop = logEl.scrollHeight;
 }
 
-// 인증 확인
-function authCheck() {
-    adminSecret = document.getElementById("adminSecret").value;
-    fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ type: "auth_check", secret: adminSecret })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.ok) {
-            log("인증 성공", "success");
-        } else {
-            log("인증 실패", "error");
-        }
-    })
-    .catch(() => log("네트워크 오류", "error"));
+function setCounts(){
+  countsEl.textContent = `계정 ${state.accounts.length} / 아이템 ${state.items.length}`;
 }
 
-// 아이템 업로드
-function uploadItem() {
-    const name = document.getElementById("itemName").value;
-    const file = document.getElementById("itemImage").files[0];
-    if (!name || !file) {
-        log("아이템명과 이미지를 입력하세요", "error");
-        return;
+/* ---------- API helpers ---------- */
+async function getJSON(url){
+  const r = await fetch(url);
+  const tx = await r.text();
+  try{ return JSON.parse(tx); }catch(e){ throw new Error('JSON parse error: '+tx.slice(0,200)); }
+}
+async function postJSON(body){
+  const r = await fetch(state.api, { method:'POST', body: JSON.stringify(body) });
+  const tx = await r.text();
+  try{ return JSON.parse(tx); }catch(e){ throw new Error('JSON parse error: '+tx.slice(0,200)); }
+}
+
+/* ---------- Auth & Load ---------- */
+$('#btn-auth').addEventListener('click', async ()=>{
+  state.api = apiEl.value.trim(); state.secret = secEl.value.trim();
+  $('#auth-state').textContent = '상태: 확인 중…';
+  try{
+    const res = await postJSON({ type:'auth_check', secret: state.secret });
+    if(res && res.ok){
+      $('#auth-state').textContent = '상태: 인증 성공';
+      $('#auth-state').classList.add('ok');
+      log('인증 성공 ✅','ok');
+      await loadAll();
+    }else{
+      $('#auth-state').textContent = '상태: 실패';
+      $('#auth-state').classList.add('danger');
+      log('인증 실패 ❌','err');
     }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64 = e.target.result.split(",")[1];
-        fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                type: "item_upload",
-                secret: adminSecret,
-                data: { name, base64, mime: file.type, filename: file.name }
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.ok) {
-                log(`아이템 '${name}' 업로드 성공`, "success");
-            } else {
-                log(`아이템 업로드 실패: ${data.error}`, "error");
-            }
-        })
-        .catch(() => log("네트워크 오류", "error"));
-    };
-    reader.readAsDataURL(file);
+  }catch(e){ $('#auth-state').textContent='상태: 오류'; log('인증 오류: '+e.message,'err'); }
+});
+
+async function loadAll(){
+  try{
+    const [items, accounts] = await Promise.all([
+      getJSON(state.api+'?sheet=items'),
+      getJSON(state.api+'?sheet=accounts'),
+    ]);
+    state.items = items || [];
+    state.accounts = accounts || [];
+    state.uidSet = new Set(state.accounts.map(a=>String(a['UID']||'')));
+    renderItemChips();
+    setCounts();
+    log('아이템/계정 목록 로드 완료','ok');
+  }catch(e){
+    log('목록 로드 실패: '+e.message,'err');
+  }
 }
 
-// 계정 저장
-function upsertAccount() {
-    const UID = document.getElementById("uid").value;
-    const desc = document.getElementById("desc").value;
-    const status = document.getElementById("status").value;
-    const price = parseInt(document.getElementById("price").value) || 0;
-    const items = document.getElementById("items").value.split(",").map(s => s.trim());
+/* ---------- Item chips ---------- */
+function renderItemChips(){
+  const box = $('#items-chips'); box.innerHTML='';
+  state.items.forEach(it=>{
+    const name = it['아이템명'] || it['name'] || '';
+    const chip = document.createElement('button');
+    chip.type='button';
+    chip.className='chip'; chip.textContent = name;
+    chip.addEventListener('click', ()=>{
+      if(state.selectedItems.has(name)) state.selectedItems.delete(name);
+      else{
+        if(state.selectedItems.size>=10){ log('아이템은 최대 10개까지 선택 가능합니다.','err'); return; }
+        state.selectedItems.add(name);
+      }
+      chip.classList.toggle('on');
+    });
+    box.appendChild(chip);
+  });
+}
 
-    if (!UID) {
-        log("UID를 입력하세요", "error");
-        return;
+/* ---------- Tabs ---------- */
+const tabAdd = $('#tab-add'), tabEdit = $('#tab-edit');
+const paneAdd = $('#pane-add'), paneEdit = $('#pane-edit');
+tabAdd.addEventListener('click', ()=>{ tabAdd.classList.add('on'); tabEdit.classList.remove('on'); paneAdd.style.display='grid'; paneEdit.style.display='none'; });
+tabEdit.addEventListener('click', ()=>{ tabEdit.classList.add('on'); tabAdd.classList.remove('on'); paneAdd.style.display='none'; paneEdit.style.display='grid'; });
+
+/* ---------- Add (new) ---------- */
+$('#btn-save-add').addEventListener('click', async ()=>{
+  const UID = ($('#add-uid').value||'').trim();
+  const price = Number($('#add-price').value||0);
+  const desc = ($('#add-desc').value||'').trim();
+  const status = $('#add-status').value;
+  const auto = $('#auto-uid').checked;
+  if(!UID){ log('신규 추가: UID를 입력하세요.','err'); return; }
+  let finalUID = UID;
+  if(state.uidSet.has(finalUID)){
+    if(!auto){ log('신규 추가: UID가 이미 존재합니다. (충돌)','err'); return; }
+    // 자동 새 UID: (최대값+1) 방식
+    const nums = Array.from(state.uidSet).map(s=>Number(s)).filter(n=>!isNaN(n));
+    const next = (nums.length? Math.max(...nums):10000)+1;
+    finalUID = String(next);
+    log(`UID 충돌 → 자동 발급: ${finalUID}`,'info');
+  }
+  const items = Array.from(state.selectedItems);
+  try{
+    const res = await postJSON({ type:'account_upsert', secret: state.secret,
+      data:{ UID: finalUID, desc, status, price, items }});
+    if(res && res.ok){
+      log(`신규 저장 완료 (UID: ${finalUID})`,'ok');
+      // 로컬 상태 갱신
+      state.uidSet.add(finalUID);
+      state.accounts.push({ UID: finalUID, 부가설명:desc, 판매상태:status, 가격:price,
+        포함아이템1:items[0]||'', 포함아이템2:items[1]||'', 포함아이템3:items[2]||'',
+        포함아이템4:items[3]||'', 포함아이템5:items[4]||'', 포함아이템6:items[5]||'',
+        포함아이템7:items[6]||'', 포함아이템8:items[7]||'', 포함아이템9:items[8]||'',
+        포함아이템10:items[9]||'' });
+      setCounts();
+    }else{
+      log('신규 저장 실패: '+(res && res.error || 'unknown'),'err');
     }
+  }catch(e){ log('신규 저장 오류: '+e.message,'err'); }
+});
 
-    fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-            type: "account_upsert",
-            secret: adminSecret,
-            data: { UID, desc, status, price, items }
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.ok) {
-            log(`계정 '${UID}' 저장 성공`, "success");
-        } else {
-            log(`계정 저장 실패: ${data.error}`, "error");
-        }
-    })
-    .catch(() => log("네트워크 오류", "error"));
-}
+/* ---------- Edit (update existing) ---------- */
+$('#btn-load-one').addEventListener('click', ()=>{
+  const uid = ($('#edit-uid').value||'').trim();
+  if(!uid){ log('수정: UID를 입력하세요.','err'); return; }
+  const found = state.accounts.find(a=>String(a['UID']||'')===uid);
+  if(!found){ log('수정: 해당 UID를 찾을 수 없습니다.','err'); return; }
+  // 필드 채우기
+  $('#edit-price').value = Number(found['가격']||0);
+  $('#edit-desc').value = found['부가설명']||'';
+  $('#edit-status').value = found['판매상태']||'판매중';
+  // 아이템 칩 동기화
+  state.selectedItems.clear();
+  const names = [];
+  for(let i=1;i<=10;i++){ const v = (found['포함아이템'+i]||'').toString().trim(); if(v) names.push(v); }
+  names.forEach(n=> state.selectedItems.add(n));
+  // 칩 반영
+  document.querySelectorAll('.chip').forEach(ch=>{
+    const on = state.selectedItems.has(ch.textContent);
+    ch.classList.toggle('on', on);
+  });
+  log(`수정: UID ${uid} 불러오기 완료`,'ok');
+});
 
-// 계정 삭제
-function deleteAccount() {
-    const uid = document.getElementById("deleteUid").value;
-    if (!uid) {
-        log("삭제할 UID를 입력하세요", "error");
-        return;
+$('#btn-save-edit').addEventListener('click', async ()=>{
+  const UID = ($('#edit-uid').value||'').trim();
+  if(!UID){ log('수정 저장: UID를 입력하세요.','err'); return; }
+  const price = Number($('#edit-price').value||0);
+  const desc = ($('#edit-desc').value||'').trim();
+  const status = $('#edit-status').value;
+  const items = Array.from(state.selectedItems);
+  try{
+    const res = await postJSON({ type:'account_upsert', secret: state.secret,
+      data:{ UID, desc, status, price, items }});
+    if(res && res.ok){
+      log(`수정 저장 완료 (UID: ${UID})`,'ok');
+      // 로컬 갱신
+      const idx = state.accounts.findIndex(a=>String(a['UID']||'')===UID);
+      if(idx>=0){
+        const a = state.accounts[idx];
+        a['부가설명']=desc; a['판매상태']=status; a['가격']=price;
+        for(let i=1;i<=10;i++) a['포함아이템'+i] = items[i-1]||'';
+      }
+    }else{
+      log('수정 저장 실패: '+(res && res.error || 'unknown'),'err');
     }
-    fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-            type: "account_delete",
-            secret: adminSecret,
-            data: { uid }
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.ok) {
-            log(`계정 '${uid}' 삭제 성공`, "success");
-        } else {
-            log(`계정 삭제 실패: ${data.error}`, "error");
-        }
-    })
-    .catch(() => log("네트워크 오류", "error"));
-}
+  }catch(e){ log('수정 저장 오류: '+e.message,'err'); }
+});
+
+/* ---------- Delete ---------- */
+$('#btn-delete').addEventListener('click', async ()=>{
+  const uid = ($('#del-uid').value||'').trim();
+  if(!uid){ log('삭제: UID를 입력하세요.','err'); return; }
+  if(!confirm(`정말 UID ${uid} 를 삭제할까요?`)) return;
+  try{
+    const res = await postJSON({ type:'account_delete', secret: state.secret, data:{ uid }});
+    if(res && res.ok){
+      log(`삭제 완료 (UID: ${uid})`,'ok');
+      // 로컬 제거
+      state.accounts = state.accounts.filter(a=>String(a['UID']||'')!==uid);
+      state.uidSet.delete(uid);
+      setCounts();
+    }else{
+      log('삭제 실패: '+(res && res.error || 'unknown'),'err');
+    }
+  }catch(e){ log('삭제 오류: '+e.message,'err'); }
+});
 </script>
-
 </body>
 </html>
