@@ -47,7 +47,14 @@
   .sold { opacity:.55 }
   .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); color:#374151; background:#f8fafc; }
 
-  .loading { display:none; margin-left:8px; color:#0ea5e9; font-weight:800; }
+  /* Top-left loading (search) */
+  .loading { display:none; position:fixed; left:10px; top:10px; background:#ffffffcc; backdrop-filter:blur(6px); border:1px solid var(--line); border-radius:12px; padding:8px 10px; gap:8px; align-items:center; z-index:120; color:#6b7280; font-weight:700; }
+  .loading .bubbles { display:inline-flex; gap:4px; }
+  .loading .bubbles i { width:6px; height:6px; border-radius:50%; background:#9ca3af; opacity:.35; animation:blink 1.2s infinite ease-in-out; display:block; }
+  .loading .bubbles i:nth-child(2){ animation-delay:.15s; }
+  .loading .bubbles i:nth-child(3){ animation-delay:.3s; }
+  @keyframes blink { 0%,100%{ opacity:.25 } 40%{ opacity:.9 } }
+
   .flash { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:var(--okbg); color:var(--okfg); border:1px solid var(--okbd); padding:10px 14px; border-radius:10px; font-weight:800; box-shadow:0 6px 24px rgba(0,0,0,.12); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:200; }
   .flash.on { opacity:1; }
 
@@ -74,13 +81,16 @@
   .modal .close { background:#fff; color:#111827; border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; }
   .help-body { padding:12px 14px 16px; }
   .help-body h2 { margin:0; font-size:18px; }
-  .help-list { margin:10px 18px 16px; color:#1f2937; line-height:1.55; }
-  .help-list li { margin:6px 0; }
+  /* New help-list layout */
+  .help-list { list-style: decimal; padding-left: 18px; margin:10px 18px 16px; color:#1f2937; line-height:1.6; }
+  .help-list > li { margin:8px 0; position: relative; left: -6px; }
+  .help-list > li .dot { margin-left: 6px; margin-right: 6px; color:#6b7280; position: relative; top: -1px; }
+  .help-list > li .t { position: relative; left: 2px; }
   .help-list ul { margin:6px 0 8px 18px; }
   .help-body em { font-style:normal; color:#111827; font-weight:700; }
 
-  /* Initial overlay spinner */
-  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; gap:12px; background:#ffffff; z-index:120; }
+  /* Initial overlay spinner for first items load */
+  .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; gap:12px; background:#ffffff; z-index:110; }
   .spinner { width:26px; height:26px; border-radius:50%; border:3px solid #e5e7eb; border-top-color:#0ea5e9; animation:spin 0.9s linear infinite; }
   .overlay .txt { color:#0f172a; font-weight:800; }
   @keyframes spin { to { transform:rotate(360deg); } }
@@ -101,7 +111,7 @@
     <label class="chk"><input type="checkbox" id="hide-sold"> 판매완료 숨기기</label>
     <button id="btn-search">검색</button>
     <button id="btn-clear" class="btn secondary">선택취소</button>
-    <span id="loading" class="loading">불러오는 중…</span>
+    <span id="loading" class="loading"><span class="bubbles"><i></i><i></i><i></i></span><span class="txt">불러오는중…</span></span>
     <div id="counts" class="counts">총 매물 – | 결과 –</div>
   </div>
   <div id="chips" class="chips"></div>
@@ -135,26 +145,26 @@
     <div class="help-body">
       <h2>구매 가이드</h2>
       <ol class="help-list">
-        <li><strong>캐릭터 선택</strong>: 상단 카드에서 원하는 캐릭터를 눌러 선택하세요. 여러 개 선택하면 <em>해당 캐릭터를 모두 포함</em>하는 계정만 검색됩니다.</li>
-        <li><strong>UID/판매상태/정렬</strong>:
+        <li><span class="dot">•</span><span class="t"><strong>캐릭터 선택</strong>: 상단 카드에서 원하는 캐릭터를 눌러 선택하세요. 여러 개 선택하면 <em>해당 캐릭터를 모두 포함</em>하는 계정만 검색됩니다.</span></li>
+        <li><span class="dot">•</span><span class="t"><strong>UID/판매상태/정렬</strong>:
           <ul>
             <li>UID: 판매자가 관리용으로 붙인 고유 번호입니다. 일부 숫자만 입력해도 포함 검색됩니다.</li>
             <li>판매완료 숨기기: 이미 판매된 계정을 리스트에서 숨깁니다.</li>
             <li>정렬: 가격 또는 포함 캐릭터 수 기준으로 오름/내림차순 정렬합니다.</li>
           </ul>
-        </li>
-        <li><strong>검색 & 확인</strong>:
+        </span></li>
+        <li><span class="dot">•</span><span class="t"><strong>검색 & 확인</strong>:
           <ul>
             <li>검색 결과 카드에서 포함 캐릭터와 <strong>가격</strong>, 부가설명을 확인하세요.</li>
             <li>원하는 계정의 uid를 복사한 뒤 판매자의 오픈카카오톡으로 문의하세요.</li>
           </ul>
-        </li>
-        <li><strong>주의 사항</strong>:
+        </span></li>
+        <li><span class="dot">•</span><span class="t"><strong>주의 사항</strong>:
           <ul>
             <li>상세한 캐릭터 목록 및 아이템 현황은 실시간으로 변경될 수 있습니다.</li>
             <li>구매후 24시간 이전에 발생한 문제에 대해서는 보상을 해 드리며, 24시간 이후에 발생한 문제에 대해서는 책임지지 않습니다.</li>
           </ul>
-        </li>
+        </span></li>
       </ol>
     </div>
   </div>
@@ -253,7 +263,8 @@ function flashDone(){
 }
 
 function setLoading(on){
-  el('#loading').style.display = on ? 'inline-block' : 'none';
+  const node = el('#loading');
+  node.style.display = on ? 'inline-flex' : 'none';
 }
 
 function renderAccounts(list){
