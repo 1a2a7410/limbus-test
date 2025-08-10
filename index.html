@@ -157,7 +157,7 @@
         </li>
         <li><strong>검색 & 확인</strong>:
           <ul>
-            <li><span class="bullet">•</span>검색 결과 카드에서 포함 캐릭터와 가격, 상세설명을 확인하세요.</li>
+            <li><span class="bullet">•</span>검색 결과 카드에서 포함 캐릭터와 가격, 부가설명을 확인하세요.</li>
             <li><span class="bullet">•</span>원하는 계정의 uid를 복사한 뒤 판매자의 오픈카카오톡으로 문의하세요.</li>
           </ul>
         </li>
@@ -282,7 +282,7 @@ function renderAccounts(list){
     const sold = (acc['판매상태']||'')==='판매완료';
     const price = Number(acc['가격']||0).toLocaleString('ko-KR');
     const uid = acc['UID']||'';
-    const desc = acc['상세설명']||'';
+    const desc = acc['부가설명']||'';
     const card = h(`<div class="acc ${sold?'sold':''}">
       <h3><span class="uid" title="탭하면 복사">${uid}</span><span class="price">${price}원</span></h3>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
