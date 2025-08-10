@@ -4,19 +4,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>림버스 계정 검색</title>
+<title>테스트 계정 검색</title>
 <style>
   :root { --bg:#fafafa; --fg:#0f172a; --mut:#6b7280; --line:#e5e7eb; --pri:#111827; --back:#ffffffd9; --accent:#0ea5e9; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',Segoe UI,Roboto,Arial,sans-serif; color:var(--fg); background:#fafafa; }
   header { position:sticky; top:0; backdrop-filter:saturate(1.2) blur(6px); background:var(--back); border-bottom:1px solid var(--line); padding:10px 14px; z-index:10; }
   h1 { margin:0; font-size:20px; }
-  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
   input[type=text]{ padding:10px 12px; border:1px solid var(--line); border-radius:10px; min-width:160px; }
   select, button { padding:10px 12px; border:1px solid var(--pri); border-radius:10px; background:var(--pri); color:#fff; font-weight:700; cursor:pointer; }
   select { background:#fff; color:var(--pri); border-color:var(--line); }
   label.chk { display:flex; align-items:center; gap:6px; font-size:13px; color:#6b7280; }
-  main { padding:12px 14px 60px; }
+  .counts { margin-left:auto; font-size:13px; color:#374151; }
+  main { padding:12px 14px 90px; }
   .grid { display:grid; gap:10px; }
   @media (max-width:480px) { .grid { grid-template-columns: repeat(5, 1fr); } }
   @media (min-width:481px) and (max-width:900px) { .grid { grid-template-columns: repeat(8, 1fr); } }
@@ -35,8 +36,11 @@
   .sold { opacity:.55 }
   .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); color:#374151; background:#f8fafc; }
   .mut { color:#6b7280; }
-  .help { position:fixed; right:12px; bottom:12px; padding:10px 12px; border-radius:999px; background:#111827; color:#fff; border:none; font-weight:700; }
-  .btn.small { padding:6px 8px; font-size:12px; border-radius:8px; }
+  /* Floating buttons (bottom-right) */
+  .fab { position:fixed; right:12px; bottom:12px; display:flex; flex-direction:column; gap:10px; z-index:50; }
+  .fab .btn-lg { padding:14px 16px; border-radius:999px; font-size:15px; border:1px solid #0f172a; background:#0f172a; color:#fff; font-weight:800; }
+  .fab .btn-lg.secondary { background:#fff; color:#0f172a; }
+  /* Modal */
   .modal { position:fixed; inset:0; background:#0006; display:none; align-items:center; justify-content:center; padding:14px; z-index:100; }
   .modal.on { display:flex; }
   .modal .box { width:min(960px, 96vw); max-height:90vh; overflow:auto; background:#fff; border-radius:14px; border:1px solid var(--line); }
@@ -48,19 +52,23 @@
   .detail .card { border:1px solid var(--line); border-radius:10px; padding:8px; text-align:center; background:#fff; }
   .detail .card img { width:88px; height:88px; object-fit:cover; border-radius:8px; display:block; margin:0 auto 6px; }
   .detail .card small { display:block; font-size:12px; color:#374151; }
+  /* Help modal */
   .help-body { padding:12px 14px 16px; }
   .help-body h2 { margin:0; font-size:18px; }
   .help-list { margin:10px 18px 16px; color:#1f2937; line-height:1.55; }
   .help-list li { margin:6px 0; }
   .help-list ul { margin:6px 0 8px 18px; }
   .help-body em { font-style:normal; color:#111827; font-weight:700; }
-  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:#111827; color:#fff; padding:10px 14px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none; transition:.25s; }
+  /* Toast + Flash */
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:#111827; color:#fff; padding:10px 14px; border-radius:999px; font-size:13px; opacity:0; pointer-events:none; transition:.25s; z-index:60; }
   .toast.on { opacity:1; }
+  .flash { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#10b981; color:#fff; padding:12px 18px; border-radius:12px; font-weight:800; box-shadow:0 6px 24px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition: opacity .4s ease; z-index:200; }
+  .flash.on { opacity:1; }
 </style>
 </head>
 <body>
 <header>
-  <h1>림버스</h1>
+  <h1>테스트</h1>
   <div class="toolbar">
     <input id="uid-q" type="text" placeholder="UID 검색">
     <select id="sort">
@@ -72,6 +80,7 @@
     </select>
     <label class="chk"><input type="checkbox" id="hide-sold"> 판매완료 숨기기</label>
     <button id="refresh">새로고침</button>
+    <div id="counts" class="counts">총 매물 – / 결과 –</div>
   </div>
 </header>
 
@@ -83,6 +92,7 @@
   <div id="accounts" class="accounts"></div>
 </main>
 
+<!-- 상세보기 모달 -->
 <div id="modal" class="modal" aria-hidden="true">
   <div class="box">
     <header>
@@ -95,10 +105,11 @@
   </div>
 </div>
 
+<!-- 구매 가이드 모달 -->
 <div id="help-modal" class="modal" aria-hidden="true">
   <div class="box">
     <header>
-      <h3><span>구매 가이드</span></h3>
+      <h3><span>사용 설명서</span></h3>
       <button id="close-help" class="close" type="button">닫기</button>
     </header>
     <div class="help-body">
@@ -129,17 +140,19 @@
   </div>
 </div>
 
+<!-- Toast & Flash -->
 <div id="toast" class="toast">복사됨</div>
-<div id="flash-center" style="
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-  background:#10b981; color:#fff; padding:12px 18px; border-radius:12px; 
-  font-weight:800; box-shadow:0 6px 24px rgba(0,0,0,.18);
-  opacity:0; pointer-events:none; transition:.18s; z-index:200;">검색완료</div>
+<div id="flash" class="flash">검색완료</div>
 
-<button class="help" id="help" type="button">설명서</button>
+<!-- Floating buttons -->
+<div class="fab">
+  <button class="btn-lg" id="help">사용 설명서</button>
+  <a class="btn-lg secondary" id="contact" href="#" target="_blank" rel="noopener">구매 문의</a>
+</div>
 
 <script>
 const API_BASE = "https://script.google.com/macros/s/AKfycbzVFaaPDULXN7BerQqHI6spRMgftRS3B-kYniOmT2ySjy_557QeYAf4OIrVQyuGt-I3gA/exec";
+const KAKAO_LINK = "https://open.kakao.com/o/sENDKZBh";
 const PLACEHOLDER = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23eef'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%23999'>no image</text></svg>";
 
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -148,7 +161,7 @@ async function j(url, opt={}, tries=2){
   const t = setTimeout(()=>ctrl.abort(), 12000);
   try{
     const u = url + (url.includes("?") ? "&" : "?") + "_v=" + Date.now();
-    const r = await fetch(u, { ...opt, headers: {'Content-Type':'application/json'}, signal: ctrl.signal });
+    const r = await fetch(u, { ...opt, headers: {'Content-Type':'text/plain;charset=utf-8'}, signal: ctrl.signal });
     const txt = await r.text();
     try { const json = JSON.parse(txt); if(!r.ok || json.error) throw json; return json; }
     catch(e) { throw txt || e; }
@@ -163,6 +176,10 @@ let accounts = [];
 
 function el(q){ return document.querySelector(q); }
 function h(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+function updateCounts(total, matched){
+  el('#counts').textContent = `총 매물 ${total} | 결과 ${matched}`;
+}
 
 function renderItems(list){
   const box = el('#items'); box.innerHTML = '';
@@ -238,16 +255,21 @@ function showToast(msg='복사됨'){
   const t = el('#toast'); t.textContent = msg; t.classList.add('on');
   setTimeout(()=> t.classList.remove('on'), 1100);
 }
+
 function doneFlash(){
-  const f = el('#flash-center'); if(!f) return;
-  f.style.opacity = 1;
-  clearTimeout(doneFlash._t);
-  doneFlash._t = setTimeout(()=>{ f.style.opacity = 0; }, 1000);
+  const f = el('#flash'); if(!f) return;
+  f.classList.add('on');
+  clearTimeout(doneFlash._t1);
+  clearTimeout(doneFlash._t2);
+  // 1초 대기 후 서서히 사라짐
+  doneFlash._t1 = setTimeout(()=>{
+    f.classList.remove('on'); // CSS transition으로 서서히 사라짐
+  }, 1000);
 }
 
 function renderAccounts(list){
   const box = el('#accounts'); box.innerHTML = '';
-  if(!list.length){ box.innerHTML = '<p class="mut">조건에 맞는 계정이 없습니다.</p>'; return; }
+  if(!list.length){ box.innerHTML = '<p class="mut">조건에 맞는 계정이 없습니다.</p>'; updateCounts(accounts.length, 0); return; }
   list.forEach(acc=>{
     const names = itemsFromAccount(acc);
     const thumbs = names.map(n=>{
@@ -279,6 +301,7 @@ function renderAccounts(list){
     card.querySelector('.detail-btn').addEventListener('click', ()=> openModal(acc));
     box.appendChild(card);
   });
+  updateCounts(accounts.length, list.length);
 }
 
 async function loadAll(){
@@ -289,23 +312,39 @@ async function loadAll(){
   try{
     accounts = await j(API_BASE + "?sheet=accounts");
   }catch(e){ console.warn('accounts load failed', e); }
-  renderItems(Array.from(itemMap, ([name, url])=>({ "아이템명":name, "이미지URL":url })));
-  renderAccounts(sortResults(applyFilters(accounts))); doneFlash();
+  // 아이템 시트 비었으면 accounts에서 유추
+  if (itemMap.size === 0 && Array.isArray(accounts)) {
+    const s = new Set();
+    accounts.forEach(a => {
+      for (let i=1;i<=12;i++){ const v=(a["포함아이템"+i]||"").toString().trim(); if(v) s.add(v); }
+    });
+    const list = Array.from(s).map(n => ({ "아이템명": n, "이미지URL": "" }));
+    renderItems(list);
+  } else {
+    renderItems(Array.from(itemMap, ([name, url])=>({ "아이템명":name, "이미지URL":url })));
+  }
+  renderAccounts(sortResults(applyFilters(accounts)));
+  doneFlash();
 }
 
+// 이벤트: 필터/정렬/검색
 ['#refresh','#sort','#uid-q','#hide-sold'].forEach(q=>{
   const node = el(q);
   if(!node) return;
   const evt = (q==='#sort' || q==='#hide-sold') ? 'change' : (q==='#refresh'?'click':'input');
-  node.addEventListener(evt, ()=> { renderAccounts(sortResults(applyFilters(accounts))); doneFlash(); doneFlash(); });
+  node.addEventListener(evt, ()=> { renderAccounts(sortResults(applyFilters(accounts))); doneFlash(); });
 });
 
+// 모달 닫기/열기
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeModal(); closeHelp(); } });
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', (e)=>{ if(e.target.id==='modal') closeModal(); });
-document.getElementById('help').addEventListener('click', openHelp);
-document.getElementById('close-help').addEventListener('click', closeHelp);
+
+// 도움말/문의 버튼
+document.getElementById('help').addEventListener('click', (e)=>{ e.preventDefault(); openHelp(); });
+document.getElementById('close-help').addEventListener('click', (e)=>{ e.preventDefault(); closeHelp(); });
 document.getElementById('help-modal').addEventListener('click', (e)=>{ if(e.target.id==='help-modal') closeHelp(); });
+document.getElementById('contact').setAttribute('href', KAKAO_LINK);
 
 loadAll();
 </script>
