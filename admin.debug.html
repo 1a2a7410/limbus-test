@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관리자 (디버그용)</title>
+<style>
+  :root {{ --b:#e5e7eb; --t:#111827; --mut:#6b7280; --ok:#0a8; --err:#c62828; }}
+  * {{ box-sizing: border-box; }}
+  body {{ font-family: -apple-system, system-ui, Segoe UI, Roboto, 'Noto Sans KR', Arial, sans-serif; margin:0; padding:16px; color:var(--t); }}
+  h1 {{ margin:0 0 12px; }}
+  fieldset {{ border:1px solid var(--b); border-radius:10px; padding:12px; margin:12px 0; }}
+  legend {{ padding:0 6px; color:#374151; }}
+  label {{ display:block; font-size:13px; margin:8px 0 4px; color:#374151; }}
+  input[type=text], input[type=number], select {{ width:100%; padding:9px; border:1px solid var(--b); border-radius:8px; }}
+  input[type=file] {{ width:100%; }}
+  .row {{ display:flex; gap:8px; flex-wrap:wrap; }}
+  .half {{ flex:1 1 280px; }}
+  .btn {{ padding:10px 12px; border:1px solid #111827; background:#111827; color:#fff; border-radius:8px; cursor:pointer; font-weight:700; }}
+  .btn.secondary {{ background:#fff; color:#111827; }}
+  .log {{ white-space:pre-wrap; background:#0b10201a; border:1px dashed var(--b); padding:10px; border-radius:10px; margin-top:8px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }}
+  .ok {{ color:var(--ok); }}
+  .err {{ color:var(--err); }}
+  small {{ color:var(--mut); }}
+</style>
+</head>
+<body>
+<h1>관리자 (디버그용)</h1>
+<p><small>API_BASE: https://script.google.com/macros/s/AKfycby3ob27QKQHrQ9owfeJFXCAaZVw7dw4FfFqmQ5x-l71akGur1l7ft0Ph0MqMDYvrBhJ0Q/exec</small></p>
+
+<fieldset>
+  <legend>0) API 통신 테스트</legend>
+  <div class="row">
+    <button class="btn" id="ping-items">GET items</button>
+    <button class="btn" id="ping-accounts">GET accounts</button>
+    <button class="btn secondary" id="auth-check">POST auth_check</button>
+  </div>
+  <div id="log0" class="log"></div>
+</fieldset>
+
+<fieldset>
+  <legend>1) 아이템 업로드</legend>
+  <label>아이템명</label>
+  <input id="it-name" type="text" placeholder="예: 가시 오랏줄">
+  <label>이미지 파일</label>
+  <input id="it-file" type="file" accept="image/*">
+  <div class="row" style="margin-top:8px;">
+    <button class="btn" id="it-upload">업로드</button>
+  </div>
+  <div id="log1" class="log"></div>
+</fieldset>
+
+<fieldset>
+  <legend>2) 계정 추가/수정</legend>
+  <div class="row">
+    <div class="half">
+      <label>UID</label>
+      <input id="ac-uid" type="text" placeholder="예: UID001">
+    </div>
+    <div class="half">
+      <label>판매상태</label>
+      <select id="ac-status">
+        <option value="판매중">판매중</option>
+        <option value="판매완료">판매완료</option>
+      </select>
+    </div>
+  </div>
+  <label>가격(원)</label>
+  <input id="ac-price" type="number" min="0" step="1000">
+  <label>부가설명</label>
+  <input id="ac-desc" type="text" placeholder="예: 뽑기권 500장">
+  <label>포함 아이템 (이름을 콤마로 구분)</label>
+  <input id="ac-items" type="text" placeholder="예: 가시 오랏줄, 부적 묶음, 통상 배터리">
+  <div class="row" style="margin-top:8px;">
+    <button class="btn" id="ac-save">저장(추가/수정)</button>
+  </div>
+  <div id="log2" class="log"></div>
+</fieldset>
+
+<fieldset>
+  <legend>3) 계정 삭제</legend>
+  <label>UID</label>
+  <input id="ac-deluid" type="text" placeholder="삭제할 UID 입력">
+  <div class="row" style="margin-top:8px;">
+    <button class="btn secondary" id="ac-del">삭제</button>
+  </div>
+  <div id="log3" class="log"></div>
+</fieldset>
+
+<script>
+const API_BASE = "https://script.google.com/macros/s/AKfycby3ob27QKQHrQ9owfeJFXCAaZVw7dw4FfFqmQ5x-l71akGur1l7ft0Ph0MqMDYvrBhJ0Q/exec";
+const ADMIN_PASSWORD = "050200";
+
+function log(el, obj, ok=true){{ 
+  el.innerHTML = (ok? "✅ OK\n":"⛔ ERROR\n") + (typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2)); 
+}}
+
+async function j(url, opt={{}}){{ 
+  const r = await fetch(url, {{ ...opt, headers: {{'Content-Type':'application/json'}} }});
+  let text = await r.text();
+  try {{ 
+    const json = JSON.parse(text); 
+    if(!r.ok || json.error) throw {{ http:r.status, json }}; 
+    return json;
+  }} catch(e) {{
+    throw {{ http:r.status, text }};
+  }}
+}}
+
+// 0) 핑
+document.getElementById('ping-items').onclick = async () => {{
+  const box = document.getElementById('log0');
+  try {{
+    const data = await j(API_BASE + "?sheet=items");
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+document.getElementById('ping-accounts').onclick = async () => {{
+  const box = document.getElementById('log0');
+  try {{
+    const data = await j(API_BASE + "?sheet=accounts");
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+document.getElementById('auth-check').onclick = async () => {{
+  const box = document.getElementById('log0');
+  try {{
+    const data = await j(API_BASE, {{ method:'POST', body: JSON.stringify({{ type:'auth_check', secret: ADMIN_PASSWORD }}) }});
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+
+// 1) 아이템 업로드
+function toBase64(file){{ 
+  return new Promise((res, rej)=>{{ 
+    const r = new FileReader(); 
+    r.onload = ()=> res(r.result.split(',')[1]); 
+    r.onerror = rej; 
+    r.readAsDataURL(file);
+  }});
+}}
+
+document.getElementById('it-upload').onclick = async () => {{
+  const box = document.getElementById('log1');
+  const name = document.getElementById('it-name').value.trim();
+  const file = document.getElementById('it-file').files[0];
+  if(!name || !file) return log(box, "아이템명/이미지 파일을 확인하세요.", false);
+  try {{
+    const base64 = await toBase64(file);
+    const data = await j(API_BASE, {{ method:'POST', body: JSON.stringify({{
+      type:'item_upload', secret: ADMIN_PASSWORD, data: {{ name, filename:file.name, mime:file.type||'image/jpeg', base64 }}
+    }}) }});
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+
+// 2) 계정 추가/수정
+document.getElementById('ac-save').onclick = async () => {{
+  const box = document.getElementById('log2');
+  const UID = document.getElementById('ac-uid').value.trim();
+  const desc = document.getElementById('ac-desc').value.trim();
+  const status = document.getElementById('ac-status').value;
+  const price = Number(document.getElementById('ac-price').value||0);
+  const items = document.getElementById('ac-items').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!UID) return log(box, "UID를 입력하세요.", false);
+  try {{
+    const data = await j(API_BASE, {{ method:'POST', body: JSON.stringify({{
+      type:'account_upsert', secret: ADMIN_PASSWORD, data: {{ UID, desc, status, price, items }}
+    }}) }});
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+
+// 3) 계정 삭제
+document.getElementById('ac-del').onclick = async () => {{
+  const box = document.getElementById('log3');
+  const uid = document.getElementById('ac-deluid').value.trim();
+  if(!uid) return log(box, "UID를 입력하세요.", false);
+  try {{
+    const data = await j(API_BASE, {{ method:'POST', body: JSON.stringify({{
+      type:'account_delete', secret: ADMIN_PASSWORD, data: {{ uid }}
+    }}) }});
+    log(box, data);
+  }} catch(e) {{ log(box, e, false); }}
+}};
+</script>
+</body>
+</html>
