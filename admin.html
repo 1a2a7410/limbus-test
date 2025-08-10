@@ -73,13 +73,17 @@
     <!-- 아이템 관리 -->
     <section class="panel">
       <h2>아이템 관리</h2>
-      <p class="desc">아이템 이미지를 구글드라이브 폴더에 업로드하고 시트(items)에 자동 반영합니다.</p>
-      <label>아이템명</label>
-      <input id="item-name" type="text" placeholder="예: 가시 오랏줄">
-      <label>이미지 파일</label>
+      <p class="desc">Drive 폴더에 업로드하고, 동일 이름이 있으면 <b>업데이트</b>, 없으면 <b>신규 추가</b>합니다.</p>
+      <label>아이템명 선택 또는 신규 입력</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="item-select" style="flex:1; min-width:0;"></select>
+        <span class="muted">또는</span>
+        <input id="item-name" type="text" placeholder="새 아이템명 입력" style="flex:1; min-width:0;">
+      </div>
+      <label style="margin-top:8px;">이미지 파일</label>
       <input id="item-file" type="file" accept="image/*">
       <div style="display:flex; gap:8px; margin-top:10px;">
-        <button id="upload-item" class="btn" type="button">아이템 업로드</button>
+        <button id="upload-item" class="btn" type="button">업로드/갱신</button>
         <button id="refresh-items" class="btn secondary" type="button">목록 새로고침</button>
       </div>
       <div id="item-msg" class="footnote"></div>
@@ -164,18 +168,22 @@ $('#pw-ok').addEventListener('click', async ()=>{
   try{
     const auth = await j(API_BASE, { method:'POST', body: JSON.stringify({ type:'auth_check', secret: input }) });
     if(!auth.ok){ $('#pw-msg').textContent='서버 인증 실패'; return; }
-  }catch(e){
-    // 서버에서 auth_check 미구현이어도 통과
-  }
+  }catch(e){ /* 서버 미구현이어도 통과 */ }
   $('#gate').style.display='none';
 });
 
 /* -------- 아이템 목록/업로드 -------- */
 let itemList = [];
 
+function fillItemSelect(){
+  const sel = $('#item-select');
+  sel.innerHTML = '<option value="">(선택)</option>' + itemList.map(it=>`<option value="${it["아이템명"]}">${it["아이템명"]}</option>`).join('');
+}
+
 async function loadItems(){
   const data = await j(API_BASE+'?sheet=items');
   itemList = Array.isArray(data)? data: [];
+  fillItemSelect();
   const wrap = $('#items'); wrap.innerHTML='';
   itemList.forEach(it=>{
     const btn = document.createElement('button');
@@ -189,18 +197,20 @@ async function loadItems(){
 $('#refresh-items').addEventListener('click', loadItems);
 
 $('#upload-item').addEventListener('click', async ()=>{
-  const name = $('#item-name').value.trim();
+  const selName = $('#item-select').value.trim();
+  const inputName = $('#item-name').value.trim();
+  const finalName = inputName || selName;
   const file = $('#item-file').files[0];
-  if(!name || !file){ $('#item-msg').innerHTML = '<span class="err">아이템명/파일을 확인하세요.</span>'; return; }
+  if(!finalName || !file){ $('#item-msg').innerHTML = '<span class="err">아이템명/파일을 확인하세요.</span>'; return; }
   try{
     $('#item-msg').textContent='업로드 중...';
     const base64 = await toBase64(file);
     const r = await j(API_BASE, { method:'POST', body: JSON.stringify({
-      type:'item_upload', secret: ADMIN_PASSWORD, data: { name, filename:file.name, mime:file.type||'image/jpeg', base64 }
+      type:'item_upload', secret: ADMIN_PASSWORD, data: { name: finalName, filename:file.name, mime:file.type||'image/jpeg', base64 }
     })});
     if(r.error){ throw new Error(r.error); }
-    $('#item-msg').innerHTML = `<span class="ok">업로드 완료</span> — URL: ${r.url||''}`;
-    $('#item-name').value=''; $('#item-file').value='';
+    $('#item-msg').innerHTML = `<span class="ok">완료</span> — URL: ${r.url||''}`;
+    $('#item-name').value=''; $('#item-file').value=''; $('#item-select').value='';
     await loadItems();
   }catch(e){
     $('#item-msg').innerHTML = '<span class="err">실패: '+(e.message||e)+'</span>';
