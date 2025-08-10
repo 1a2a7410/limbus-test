@@ -1,203 +1,205 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>관리자 | 계정 추가/수정/삭제</title>
+<meta charset="UTF-8">
+<title>관리자 페이지</title>
 <style>
-  :root { --bg:#f8fafc; --fg:#0f172a; --line:#e5e7eb; --pri:#111827; --mut:#6b7280; --ok:#16a34a; --bad:#dc2626; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',Segoe UI,Roboto,Arial,sans-serif; color:var(--fg); background:var(--bg); }
-  header { padding:14px 16px; border-bottom:1px solid var(--line); background:#fff; position:sticky; top:0; z-index:5; }
-  h1 { margin:0; font-size:18px; }
-  main { padding:14px 16px 60px; display:grid; gap:14px; max-width:900px; margin:auto; }
-  fieldset { border:1px solid var(--line); border-radius:12px; background:#fff; }
-  legend { padding:0 8px; color:#374151; }
-  .row { display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; padding:10px 12px; border-top:1px dashed var(--line); }
-  .row:first-of-type { border-top:0; }
-  input[type=text], input[type=number], textarea, select { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; }
-  textarea { min-height:76px; resize:vertical; }
-  .hint { color:var(--mut); font-size:12px; }
-  .btns { display:flex; gap:8px; flex-wrap:wrap; padding:12px; border-top:1px solid var(--line); background:#fafafa; border-bottom-left-radius:12px; border-bottom-right-radius:12px; }
-  button { padding:10px 12px; border-radius:10px; border:1px solid var(--pri); font-weight:800; cursor:pointer; }
-  .primary { background:var(--pri); color:#fff; }
-  .secondary { background:#fff; color:var(--pri); }
-  .danger { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-  .status { padding:10px 12px; border-radius:10px; background:#f3f4f6; color:#374151; font-size:14px; }
-  .status.ok { background:#ecfdf5; color:#065f46; }
-  .status.err { background:#fff1f2; color:#be123c; }
-  .grid2 { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
-  .mut { color:#6b7280; font-size:12px; }
-  footer { text-align:center; color:#94a3b8; font-size:12px; padding:16px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { font-size: 22px; }
+    .input-group { margin-bottom: 10px; }
+    label { display: inline-block; width: 100px; font-weight: bold; }
+    input, textarea, select { padding: 5px; margin-right: 10px; }
+    button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-danger { background-color: #dc3545; color: white; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    #log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; background: #f9f9f9; }
+    .log-entry { margin-bottom: 5px; }
+    .log-time { color: #888; font-size: 12px; margin-right: 5px; }
+    .log-success { color: green; }
+    .log-error { color: red; }
 </style>
 </head>
 <body>
-<header><h1>관리자 콘솔</h1></header>
-<main>
-  <fieldset>
-    <legend>접속</legend>
-    <div class="row">
-      <label>웹앱 주소</label>
-      <input id="api" type="text" value="https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec">
-    </div>
-    <div class="row">
-      <label>비밀번호</label>
-      <input id="secret" type="text" placeholder="ADMIN_SECRET (예: 050200)">
-    </div>
-    <div class="btns">
-      <button id="btn-auth" class="secondary" type="button">비밀번호 확인</button>
-      <span id="auth-state" class="mut">확인 전</span>
-    </div>
-  </fieldset>
 
-  <fieldset>
-    <legend>계정 추가/수정</legend>
-    <div class="row"><label>UID</label><input id="uid" type="text" placeholder="예: 10023"></div>
-    <div class="row"><label>판매상태</label>
-      <select id="status">
+<h1>관리자 페이지</h1>
+
+<div class="input-group">
+    <label>비밀번호</label>
+    <input type="password" id="adminSecret">
+    <button class="btn-primary" onclick="authCheck()">인증</button>
+</div>
+
+<h2>아이템 추가</h2>
+<div class="input-group">
+    <label>아이템명</label>
+    <input type="text" id="itemName">
+</div>
+<div class="input-group">
+    <label>이미지</label>
+    <input type="file" id="itemImage">
+</div>
+<button class="btn-primary" onclick="uploadItem()">아이템 업로드</button>
+
+<h2>계정 추가</h2>
+<div class="input-group">
+    <label>UID</label>
+    <input type="text" id="uid">
+</div>
+<div class="input-group">
+    <label>설명</label>
+    <textarea id="desc"></textarea>
+</div>
+<div class="input-group">
+    <label>판매상태</label>
+    <select id="status">
         <option value="판매중">판매중</option>
         <option value="판매완료">판매완료</option>
-      </select>
-    </div>
-    <div class="row"><label>가격(원)</label><input id="price" type="number" min="0" step="1000" placeholder="예: 45000"></div>
-    <div class="row"><label>부가설명</label><textarea id="desc" placeholder="예: 뽑기권 1000장"></textarea></div>
-    <div class="row">
-      <label>아이템들</label>
-      <div>
-        <div class="grid2">
-          <input class="it" type="text" placeholder="포함아이템1">
-          <input class="it" type="text" placeholder="포함아이템2">
-          <input class="it" type="text" placeholder="포함아이템3">
-          <input class="it" type="text" placeholder="포함아이템4">
-          <input class="it" type="text" placeholder="포함아이템5">
-          <input class="it" type="text" placeholder="포함아이템6">
-          <input class="it" type="text" placeholder="포함아이템7">
-          <input class="it" type="text" placeholder="포함아이템8">
-          <input class="it" type="text" placeholder="포함아이템9">
-          <input class="it" type="text" placeholder="포함아이템10">
-          <input class="it" type="text" placeholder="포함아이템11 (프론트 확장 시)">
-          <input class="it" type="text" placeholder="포함아이템12 (프론트 확장 시)">
-        </div>
-        <p class="hint">※ 비워두면 해당 칸은 저장되지 않습니다. (백엔드 기본 10칸, 프론트는 최대 12칸까지 확장 가능)</p>
-      </div>
-    </div>
-    <div class="btns">
-      <button id="btn-upsert" class="primary" type="button">저장(추가/수정)</button>
-      <span id="save-state" class="status">대기중</span>
-    </div>
-  </fieldset>
+    </select>
+</div>
+<div class="input-group">
+    <label>가격</label>
+    <input type="number" id="price">
+</div>
+<div class="input-group">
+    <label>포함아이템</label>
+    <input type="text" id="items" placeholder="콤마로 구분">
+</div>
+<button class="btn-primary" onclick="upsertAccount()">계정 저장</button>
 
-  <fieldset>
-    <legend>계정 삭제</legend>
-    <div class="row"><label>UID</label><input id="del-uid" type="text" placeholder="삭제할 UID 입력"></div>
-    <div class="btns">
-      <button id="btn-delete" class="danger" type="button">삭제</button>
-      <span id="del-state" class="status">대기중</span>
-    </div>
-  </fieldset>
+<h2>계정 삭제</h2>
+<div class="input-group">
+    <label>UID</label>
+    <input type="text" id="deleteUid">
+</div>
+<button class="btn-danger" onclick="deleteAccount()">계정 삭제</button>
 
-  <fieldset>
-    <legend>점검</legend>
-    <div class="btns">
-      <button id="btn-ping" class="secondary" type="button">/items 읽기</button>
-      <button id="btn-pong" class="secondary" type="button">/accounts 읽기</button>
-      <span id="read-state" class="mut">-</span>
-    </div>
-  </fieldset>
-</main>
-<footer>© Admin Console</footer>
+<h2>로그</h2>
+<div id="log"></div>
 
 <script>
-const $ = (q)=>document.querySelector(q);
-const api = $("#api");
-const secret = $("#secret");
-const statusAuth = $("#auth-state");
-const statusSave = $("#save-state");
-const statusDel  = $("#del-state");
-const statusRead = $("#read-state");
+const API_URL = "https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec";
+let adminSecret = "";
 
-async function postJSON(type, data){
-  const url = api.value.trim();
-  const body = JSON.stringify({ type, secret: secret.value.trim(), data });
-  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body });
-  const text = await res.text();
-  try { return JSON.parse(text); } catch(e){ throw new Error('ParseError: '+text.slice(0,200)); }
-}
-async function getJSON(path){
-  const res = await fetch(api.value.trim() + path, { headers:{'Content-Type':'text/plain;charset=utf-8'} });
-  const text = await res.text();
-  try { return JSON.parse(text); } catch(e){ throw new Error('ParseError: '+text.slice(0,200)); }
+// 로그 함수
+function log(message, type = "success") {
+    const logDiv = document.getElementById("log");
+    const time = new Date().toLocaleTimeString();
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+    entry.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${message}</span>`;
+    logDiv.appendChild(entry);
+    logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// 비밀번호 확인
-$("#btn-auth").addEventListener('click', async ()=>{
-  statusAuth.textContent = '확인 중…';
-  try{
-    const r = await postJSON('auth_check', {});
-    if(r && r.ok){ statusAuth.textContent = '확인 완료'; statusAuth.style.color = '#16a34a'; }
-    else { throw new Error(r && r.error || 'unknown'); }
-  }catch(e){
-    statusAuth.textContent = '실패: '+e.message;
-    statusAuth.style.color = '#dc2626';
-  }
-});
+// 인증 확인
+function authCheck() {
+    adminSecret = document.getElementById("adminSecret").value;
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "auth_check", secret: adminSecret })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            log("인증 성공", "success");
+        } else {
+            log("인증 실패", "error");
+        }
+    })
+    .catch(() => log("네트워크 오류", "error"));
+}
 
-// 저장(추가/수정)
-$("#btn-upsert").addEventListener('click', async ()=>{
-  const UID = $("#uid").value.trim();
-  const desc = $("#desc").value.trim();
-  const statusVal = $("#status").value;
-  const price = parseInt($("#price").value, 10) || 0;
-  const items = Array.from(document.querySelectorAll('.it')).map(i=>i.value.trim()).filter(Boolean);
-
-  statusSave.className = 'status';
-  statusSave.textContent = '요청 중…';
-  try{
-    const r = await postJSON('account_upsert', { UID, desc, status: statusVal, price, items });
-    if(r && r.ok){
-      statusSave.className = 'status ok';
-      statusSave.textContent = '저장 성공';
-    } else {
-      throw new Error(r && r.error || 'unknown');
+// 아이템 업로드
+function uploadItem() {
+    const name = document.getElementById("itemName").value;
+    const file = document.getElementById("itemImage").files[0];
+    if (!name || !file) {
+        log("아이템명과 이미지를 입력하세요", "error");
+        return;
     }
-  }catch(e){
-    statusSave.className = 'status err';
-    statusSave.textContent = '저장 실패: '+e.message;
-  }
-});
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result.split(",")[1];
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "item_upload",
+                secret: adminSecret,
+                data: { name, base64, mime: file.type, filename: file.name }
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) {
+                log(`아이템 '${name}' 업로드 성공`, "success");
+            } else {
+                log(`아이템 업로드 실패: ${data.error}`, "error");
+            }
+        })
+        .catch(() => log("네트워크 오류", "error"));
+    };
+    reader.readAsDataURL(file);
+}
 
-// 삭제
-$("#btn-delete").addEventListener('click', async ()=>{
-  const uid = $("#del-uid").value.trim(); // 소문자 uid
-  statusDel.className = 'status';
-  statusDel.textContent = '요청 중…';
-  try{
-    const r = await postJSON('account_delete', { uid });
-    if(r && r.ok){
-      statusDel.className = 'status ok';
-      statusDel.textContent = '삭제 성공';
-    } else {
-      throw new Error(r && r.error || 'unknown');
+// 계정 저장
+function upsertAccount() {
+    const UID = document.getElementById("uid").value;
+    const desc = document.getElementById("desc").value;
+    const status = document.getElementById("status").value;
+    const price = parseInt(document.getElementById("price").value) || 0;
+    const items = document.getElementById("items").value.split(",").map(s => s.trim());
+
+    if (!UID) {
+        log("UID를 입력하세요", "error");
+        return;
     }
-  }catch(e){
-    statusDel.className = 'status err';
-    statusDel.textContent = '삭제 실패: '+e.message;
-  }
-});
 
-// 점검
-$("#btn-ping").addEventListener('click', async ()=>{
-  try{ const r = await getJSON('?sheet=items'); statusRead.textContent = 'items OK('+(r?.length||0)+')'; }
-  catch(e){ statusRead.textContent = 'items ERR: '+e.message; }
-});
-$("#btn-pong").addEventListener('click', async ()=>{
-  try{ const r = await getJSON('?sheet=accounts'); statusRead.textContent = 'accounts OK('+(r?.length||0)+')'; }
-  catch(e){ statusRead.textContent = 'accounts ERR: '+e.message; }
-});
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+            type: "account_upsert",
+            secret: adminSecret,
+            data: { UID, desc, status, price, items }
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            log(`계정 '${UID}' 저장 성공`, "success");
+        } else {
+            log(`계정 저장 실패: ${data.error}`, "error");
+        }
+    })
+    .catch(() => log("네트워크 오류", "error"));
+}
 
-// 기본값 셋업
-api.value = "https://script.google.com/macros/s/AKfycbzUqwzXC4ORsHjYZ_ENyroHXz2G41e0ENMvEiUOreCuiYhnT56f48tSMJmQzbC162rPGA/exec";
+// 계정 삭제
+function deleteAccount() {
+    const uid = document.getElementById("deleteUid").value;
+    if (!uid) {
+        log("삭제할 UID를 입력하세요", "error");
+        return;
+    }
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+            type: "account_delete",
+            secret: adminSecret,
+            data: { uid }
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            log(`계정 '${uid}' 삭제 성공`, "success");
+        } else {
+            log(`계정 삭제 실패: ${data.error}`, "error");
+        }
+    })
+    .catch(() => log("네트워크 오류", "error"));
+}
 </script>
+
 </body>
 </html>
