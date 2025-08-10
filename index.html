@@ -274,7 +274,7 @@ function renderAccounts(list){
   if(!list.length){ box.innerHTML = '<p class="chip" style="background:#fff;border-color:#e5e7eb;color:#6b7280;">조건에 맞는 계정이 없습니다.</p>'; updateCounts(accounts?.length||0, 0); return; }
   list.forEach(acc=>{
     const names = itemsFromAccount(acc);
-    const thumbs = names.slice(0,11).map(n=>{
+    const thumbs = names.slice(0,8).map(n=>{
       const url = cleanUrl(itemsMap.get(n)||PLACEHOLDER);
       return `<img loading="lazy" decoding="async" src="${url||PLACEHOLDER}" alt="${n}" title="${n}" onerror="this.src='${PLACEHOLDER}'">`;
     }).join('');
