@@ -12,38 +12,69 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body { font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: linear-gradient(180deg,#fafafe,#f6f7fc); color:var(--fg); }
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(250,250,254,.8); border-bottom: 1px solid var(--border); z-index: 10; }
-  .hdr-in { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 14px 24px; }
-  h1 { font-size: clamp(28px, 3vw, 40px); margin: 0; letter-spacing: .5px; }
-  .help-btn { border:1px solid var(--accent); background: var(--accent); color:#fff; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; }
-  .toolbar { display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; padding: 12px 24px; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 16px 16px 40px; }
+
+  header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(250,250,254,.85); border-bottom: 1px solid var(--border); z-index: 10; }
+  .hdr-in { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 12px 16px; }
+  h1 { font-size: clamp(22px, 3vw, 34px); margin: 0; letter-spacing: .3px; }
+  .help-btn { border:1px solid var(--accent); background: var(--accent); color:#fff; padding:8px 12px; border-radius:10px; font-weight:700; cursor:pointer; }
+
+  .toolbar { display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; padding: 8px 16px; }
   .filters { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
-  #selected-items { font-size:14px; color:var(--muted); min-height: 28px; }
-  .btn { padding:10px 16px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
+  .btn { padding:8px 12px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
   .btn.secondary { background:#fff; color:var(--primary); }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
-  .input, .select { padding:10px 12px; border:1px solid var(--border); border-radius:10px; min-width: 160px; background:#fff; }
-  .check { display:flex; gap:6px; align-items:center; font-size:14px; color:#384055; }
-  #items { display:grid; gap:12px; margin: 12px auto 24px; max-width: 1000px; grid-template-columns: repeat(2, 1fr); }
-  @media (min-width: 640px) { #items { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 1024px) { #items { grid-template-columns: repeat(4, 1fr); } }
-  .card { border:1px solid var(--border); border-radius:14px; padding:10px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .2s ease; background:var(--card); }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(25,25,60,.06); }
-  .card img { width:100%; height: 90px; object-fit:cover; border-radius:10px; }
-  @media (min-width:640px){ .card img { height: 120px; } }
-  @media (min-width:1024px){ .card img { height: 150px; } }
-  .name { margin-top:8px; font-size:14px; font-weight:600; }
-  .selected { outline: 3px solid #7f8cff; outline-offset: 2px; }
-  #results { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:16px; margin: 18px auto 48px; }
-  .account { position:relative; border:1px solid var(--border); border-radius:16px; padding:14px; background:var(--card); text-align:left; box-shadow: 0 8px 20px rgba(25,25,60,.04); }
-  .account h3 { margin:0 0 8px; font-size:16px; }
+  .input, .select { padding:8px 10px; border:1px solid var(--border); border-radius:10px; min-width: 136px; background:#fff; }
+  .check { display:flex; gap:6px; align-items:center; font-size:13px; color:#384055; }
+
+  /* 선택 목록 바 (필터 아래, 가로 스크롤) */
+  .selected-bar{
+    display:flex; gap:6px; align-items:center; padding:8px 16px;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    background:#fff; overflow-x:auto; white-space:nowrap; min-height:36px; scrollbar-width:thin;
+  }
+  .selected-bar::-webkit-scrollbar{ height:8px; }
+  .selected-bar::-webkit-scrollbar-thumb{ background:#e0e3ff; border-radius:8px; }
+  .chip{
+    display:inline-block; border:1px solid #ddd; border-radius:999px; padding:3px 8px;
+    font-size:12px; background:#fafafa; white-space:nowrap;
+  }
+
+  /* ✅ 카드 그리드: 모바일 5열, 태블릿/PC는 자동 확장 */
+  #items{
+    margin: 12px auto 20px;
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);  /* 모바일: 5칸 */
+    gap:8px;
+    max-width: 1100px;
+  }
+  @media (min-width: 640px) {          /* 태블릿 작은 사이즈 */
+    #items { grid-template-columns: repeat(6, 1fr); }
+  }
+  @media (min-width: 900px) {           /* 태블릿 큰 사이즈 */
+    #items { grid-template-columns: repeat(7, 1fr); }
+  }
+  @media (min-width: 1200px) {          /* PC 넓은 화면 */
+    #items { grid-template-columns: repeat(8, 1fr); }
+  }
+
+  .card{ border:1px solid var(--border); border-radius:10px; padding:6px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .2s ease; background:var(--card); }
+  .card:hover{ transform: translateY(-1px); box-shadow: 0 6px 14px rgba(25,25,60,.06); }
+  .card img{ width:100%; height:54px; object-fit:cover; border-radius:8px; }
+  @media (min-width:640px){ .card img{ height:72px; } }
+  @media (min-width:1024px){ .card img{ height:90px; } }
+  .name{ margin-top:6px; font-size:12px; font-weight:600; }
+  .selected{ outline: 3px solid #7f8cff; outline-offset: 2px; }
+
+  #results { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:14px; margin: 14px auto 40px; }
+  .account { position:relative; border:1px solid var(--border); border-radius:14px; padding:12px; background:var(--card); text-align:left; box-shadow: 0 6px 16px rgba(25,25,60,.04); }
+  .account h3 { margin:0 0 6px; font-size:15px; }
   .price { font-weight:800; color:#1c3; }
-  .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
-  .thumbs img { width:56px; height:56px; object-fit:cover; border-radius:10px; border:1px solid #eee; }
-  .chip { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:4px 10px; margin:2px; font-size:12px; background:#fafafa; }
-  .soldout::after { content: "판매완료"; position:absolute; top:12px; right:-10px; background: var(--sold); color:#fff; font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px; transform: rotate(6deg); }
+  .thumbs { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+  .thumbs img { width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+  .soldout::after { content: "판매완료"; position:absolute; top:10px; right:-10px; background: var(--sold); color:#fff; font-size:11px; font-weight:800; padding:5px 8px; border-radius:999px; transform: rotate(6deg); }
   .sold-dim { opacity:.55; filter: grayscale(0.2); }
+
   .modal-backdrop { position:fixed; inset:0; background:rgba(16,18,36,.55); display:none; align-items:center; justify-content:center; padding:24px; z-index:100; }
   .modal { width: min(820px, 96vw); background:var(--card); border-radius:16px; border:1px solid var(--border); padding:16px; box-shadow: 0 24px 40px rgba(20,20,60,.18); }
   .modal header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
@@ -60,7 +91,6 @@
       <button id="help-btn" class="help-btn" type="button">설명서</button>
     </div>
     <div class="toolbar">
-      <div id="selected-items"></div>
       <div class="filters">
         <input id="uid-input" class="input" type="search" inputmode="numeric" placeholder="UID 검색" />
         <label class="check"><input id="hide-sold" type="checkbox"> 판매완료 숨기기</label>
@@ -75,6 +105,7 @@
         <button id="clear-btn" class="btn secondary" type="button">선택 해제</button>
       </div>
     </div>
+    <div id="selected-bar" class="selected-bar"></div>
   </header>
 
   <main class="container">
@@ -97,24 +128,23 @@
   <div id="help-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
     <div class="modal">
       <header>
-        <h2 style="margin:0;font-size:18px;">구매 가이드</h2>
+        <h2 style="margin:0;font-size:18px;">처음 리세계를 구매하신다면</h2>
         <button id="close-help" class="btn secondary" type="button">닫기</button>
       </header>
       <ol class="help-list">
-        <li><strong>캐릭터 선택</strong>: 상단 카드에서 원하는 캐릭터를 눌러 선택하세요. 여러 개 선택하면 <em>해당 캐릭터를 모두 포함</em>하는 계정만 검색됩니다.</li>
+        <li><strong>아이템 선택</strong>: 상단 카드에서 원하는 재화/아이템을 눌러 선택하세요. 여러 개 선택하면 <em>해당 아이템을 모두 포함</em>하는 계정만 검색됩니다.</li>
         <li><strong>UID/판매상태/정렬</strong>:
           <ul>
-            <li>UID: 판매자가 관리용으로 붙인 고유 번호입니다. 기존에 검색한 매물을 확인할때 유용합니다.</li>
+            <li>UID: 판매자가 관리용으로 붙인 고유 번호입니다. 일부 숫자만 입력해도 포함 검색됩니다.</li>
             <li>판매완료 숨기기: 이미 판매된 계정을 리스트에서 숨깁니다.</li>
-            <li>정렬: 가격 또는 포함 캐릭터 수 기준으로 오름/내림차순 정렬합니다.</li>
+            <li>정렬: 가격 또는 포함 아이템 수 기준으로 오름/내림차순 정렬합니다.</li>
           </ul>
         </li>
         <li><strong>검색 & 확인</strong>: 검색 결과 카드에서 <em>자세히 보기</em>를 통해 포함 아이템과 <strong>가격</strong>, 부가설명을 확인하세요.</li>
-        <li><strong>구매 문의</strong>: 판매자 게시글에 적힌 오픈프로필이나 아이디팜을 통해 UID를 보내 문의주세요. 오해 방지를 위해 스크린샷을 함께 보내면 좋습니다.</li>
         <li><strong>주의 사항</strong>:
           <ul>
-            <li>계정의 세부적인 아이템과 캐릭터 현황은 실시간으로 일부 변경될 수 있습니다.</li>
-            <li>계정 연동 24시간 이후 발생하는 모든 책임은 구매자에게 있습니다.</li>
+            <li>계정 거래는 각 게임/플랫폼 약관에 따라 제한될 수 있습니다. 관련 정책을 미리 확인하세요.</li>
+            <li>중고 거래 시 안전결제 등 믿을 수 있는 방법을 사용하세요.</li>
           </ul>
         </li>
       </ol>
@@ -136,7 +166,7 @@ const safeNum = (v)=> isNaN(Number(v)) ? 0 : Number(v);
 function safeImg(url){ if(!url) return PLACEHOLDER; try{ new URL(url) }catch(e){ return PLACEHOLDER }; if(!/^https:/i.test(url)) return PLACEHOLDER; return url; }
 async function fetchJSON(url, opts){ const res=await fetch(url,opts); if(!res.ok) throw new Error('API '+res.status); return res.json(); }
 
-async function loadGameTitle(){ try{ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText = d[0]?.["게임제목"] || "림버스"; }catch(_){ el('#game-title').innerText="림버스"; }}
+async function loadGameTitle(){ try{ const d=await fetchJSON(`${API_BASE}?sheet=game`); el('#game-title').innerText = d[0]?.["게임제목"] || "림버스"; }catch(_ ){ el('#game-title').innerText="림버스"; } }
 
 async function loadItems(){ const d=await fetchJSON(`${API_BASE}?sheet=items`); itemData = Array.isArray(d)&&d.length? d: []; const box=el('#items'); box.innerHTML='';
   itemData.forEach(it=>{ const b=document.createElement('button'); b.type='button'; b.className='card'; b.dataset.name=it["아이템명"]; b.onclick=()=>toggleSelect(it["아이템명"]);
@@ -144,7 +174,12 @@ async function loadItems(){ const d=await fetchJSON(`${API_BASE}?sheet=items`); 
 }
 
 function toggleSelect(name){ selected = selected.includes(name)? selected.filter(n=>n!==name): [...selected, name]; renderSelected(); }
-function renderSelected(){ el('#selected-items').innerHTML = selected.length? selected.map(n=>`<span class="chip">${n}</span>`).join('') : '아이템을 선택하세요'; el('#search-btn').disabled = selected.length===0;
+function renderSelected(){
+  const bar = el('#selected-bar');
+  const has = selected.length>0;
+  bar.innerHTML = has ? selected.map(n=>`<span class="chip">${n}</span>`).join('')
+                      : '<span style="color:#667085;font-size:13px;">아이템을 선택하세요</span>';
+  el('#search-btn').disabled = !has;
   document.querySelectorAll('.card').forEach(c=> c.classList.toggle('selected', selected.includes(c.dataset.name)));
 }
 
@@ -173,7 +208,7 @@ async function searchAccounts(){ accountsCache = await fetchJSON(`${API_BASE}?sh
 function renderResults(list){ const byName=Object.fromEntries(itemData.map(it=>[it["아이템명"], safeImg(it["이미지URL"])])); const box=el('#results'); box.innerHTML='';
   if(list.length===0){ box.innerHTML='<p>조건에 맞는 계정이 없습니다.</p>'; return; }
   list.forEach(acc=>{ const isSold=(acc["판매상태"]||"").trim()==="판매완료"; const priceText = acc["가격"]? ` <span class="price">${acc["가격"]}원</span>`: '';
-    const div=document.createElement('div'); div.className='account'+(isSold?' soldout sold-dim':''); div.innerHTML=`<h3>${acc["UID"]} - ${acc["부가설명"]||""}${priceText}</h3>`;
+    const div=document.createElement('div'); div.className='account'+(isSold?' soldout sold-dim':'' ); div.innerHTML=`<h3>${acc["UID"]} - ${acc["부가설명"]||""}${priceText}</h3>`;
     const thumbs=document.createElement('div'); thumbs.className='thumbs';
     const items=[]; Object.keys(acc).forEach(k=>{ if(k.startsWith('포함아이템') && acc[k]){ items.push(acc[k]); const url=byName[acc[k]]||PLACEHOLDER; const img=new Image(); img.loading='lazy'; img.referrerPolicy='no-referrer'; img.src=url; img.alt=acc[k]; img.onerror=()=>img.src=PLACEHOLDER; thumbs.appendChild(img); } });
     const more=document.createElement('button'); more.className='btn secondary'; more.type='button'; more.textContent='자세히 보기'; more.addEventListener('click',()=>openDetail(acc, items));

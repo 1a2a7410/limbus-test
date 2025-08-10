@@ -3,185 +3,295 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>관리자 - 림버스 (이미지 자동 업로드)</title>
+<title>관리자 · 림버스</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #f7f7fb; --card:#ffffff; --fg:#1a1a1a; --muted:#667085; --border:#e7e7ef; --primary:#1f1f3a; --accent:#4b61ff; }
+  :root { --bg:#f7f7fb; --card:#ffffff; --fg:#1a1a1a; --muted:#667085; --border:#e7e7ef; --primary:#1f1f3a; --accent:#4b61ff; --sold:#c62828; }
   * { box-sizing: border-box; }
-  body { font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: linear-gradient(180deg,#fafafe, #f6f7fc); color:var(--fg); }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
-  h1 { font-size: 28px; margin-bottom: 16px; }
-  .panel { border:1px solid var(--border); padding:16px; border-radius:14px; background:#fff; margin-bottom:16px; box-shadow: 0 8px 20px rgba(25,25,60,.04); }
-  label { display:block; margin:10px 0 6px; font-weight:600; }
-  input, textarea, select { width:100%; padding:10px; border:1px solid #d9d9e6; border-radius:10px; background:#fff; }
-  .row { display:grid; grid-template-columns: 1fr 2fr 1fr 1fr; gap:12px; }
-  .btn { padding:10px 14px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
+  html, body { height: 100%; }
+  body { font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: linear-gradient(180deg,#fafafe,#f6f7fc); color:var(--fg); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+  header { position: sticky; top: 0; backdrop-filter: blur(6px); background: rgba(250,250,254,.85); border-bottom: 1px solid var(--border); z-index: 10; }
+  .hdr-in { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 12px 16px; }
+  h1 { font-size: clamp(22px,3vw,32px); margin:0; }
+  .badge { font-size:12px; color:#556; }
+
+  .row { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+  .panel { flex:1 1 380px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow: 0 6px 16px rgba(25,25,60,.05); }
+  .panel h2 { margin:0 0 10px; font-size:18px; }
+  .panel .desc { color:#5a6175; margin:4px 0 12px; font-size:13px; }
+
+  label { display:block; font-size:13px; color:#384055; margin:10px 0 6px; }
+  input[type="text"], input[type="number"], textarea, select { width:100%; padding:10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+  textarea { min-height:72px; resize:vertical; }
+  .btn { padding:10px 12px; border:1px solid var(--primary); background:var(--primary); color:#fff; border-radius:10px; cursor:pointer; font-weight:700; }
   .btn.secondary { background:#fff; color:var(--primary); }
-  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:8px; max-height: 360px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:10px; background:#fff; }
-  .item { display:flex; gap:8px; align-items:center; }
-  .item img { width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
-  table { width:100%; border-collapse: collapse; background:#fff; border-radius:10px; overflow:hidden; }
-  th, td { border-bottom:1px solid #eee; padding:10px; text-align:left; font-size:14px; }
-  th { background:#fafafa; }
-  .pill { display:inline-block; border:1px solid #ddd; border-radius:999px; padding:2px 8px; margin:2px; font-size:12px; background:#fafafa; }
-  .right { text-align:right; }
-  .muted { color:#666; font-size:12px; }
-  .auth { max-width:420px; margin:auto; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  .muted { color:#6b7280; font-size:12px; }
+  .hr { height:1px; background:var(--border); margin:12px 0; }
+
+  /* 아이템 그리드: 모바일 5열, 태블릿/PC 자동 확장 */
+  #items{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:10px; }
+  @media (min-width:640px) { #items{ grid-template-columns: repeat(6, 1fr); } }
+  @media (min-width:900px) { #items{ grid-template-columns: repeat(7, 1fr); } }
+  @media (min-width:1200px) { #items{ grid-template-columns: repeat(8, 1fr); } }
+  .card{ border:1px solid var(--border); border-radius:10px; padding:6px; text-align:center; cursor:pointer; transition: transform .1s ease, box-shadow .2s ease; background:var(--card); }
+  .card:hover{ transform: translateY(-1px); box-shadow: 0 6px 14px rgba(25,25,60,.06); }
+  .card img{ width:100%; height:54px; object-fit:cover; border-radius:8px; }
+  .card .name{ margin-top:6px; font-size:12px; font-weight:600; }
+  .card.selected{ outline: 3px solid #7f8cff; outline-offset: 2px; }
+
+  /* 계정 아이템 선택 UI — 이미지와 셀렉트가 '붙어' 보이게 */
+  .item-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .item-row img{ width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #eee; }
+  .item-row select{ flex:1; min-width:0; }
+  .item-row .remove{ margin-left:6px; }
+
+  .footnote { color:#6b7280; font-size:12px; margin-top:8px; }
+  .ok { color:#0a8; }
+  .err { color:#c62828; }
+
+  /* 로그인(비밀번호) 게이트 */
+  #gate { position:fixed; inset:0; background:rgba(16,18,36,.55); display:flex; align-items:center; justify-content:center; padding:24px; z-index:999; }
+  #gate .box { width:min(420px,96vw); background:#fff; border-radius:16px; border:1px solid var(--border); padding:16px; }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>관리자 (비밀번호 필요)</h1>
-
-    <div id="authPanel" class="panel auth">
-      <h2 style="margin-top:0">비밀번호 입력</h2>
-      <label>관리자 비밀번호</label>
-      <input id="pw" type="password" placeholder="비밀번호">
-      <div style="display:flex; gap:8px; margin-top:12px;">
-        <button id="login" class="btn" type="button">입장</button>
-        <div id="authMsg" class="muted"></div>
-      </div>
-    </div>
-
-    <div id="main" style="display:none;">
-
-      <div class="panel">
-        <h2 style="margin-top:0">아이템 자동 업로드</h2>
-        <div style="display:grid; grid-template-columns:1.5fr 2fr 1fr; gap:12px;">
-          <div>
-            <label>아이템명</label>
-            <input id="item-name" placeholder="예: 가시 오랏줄">
-          </div>
-          <div>
-            <label>이미지 파일</label>
-            <input id="item-file" type="file" accept="image/*">
-          </div>
-          <div style="align-self:end; display:flex; gap:8px;">
-            <button id="item-upload" class="btn" type="button">업로드/저장</button>
-            <button id="item-delete" class="btn secondary" type="button">삭제</button>
-          </div>
-        </div>
-        <div id="item-msg" class="muted" style="margin-top:8px;"></div>
-      </div>
-
-      <div class="panel">
-        <h2 style="margin-top:0">계정 추가/수정</h2>
-        <div class="row">
-          <div>
-            <label>UID</label>
-            <input id="uid" required placeholder="예: 1005">
-          </div>
-          <div>
-            <label>부가설명</label>
-            <input id="desc" placeholder="예: 초반 진행용">
-          </div>
-          <div>
-            <label>판매상태</label>
-            <select id="status">
-              <option>판매중</option>
-              <option>판매완료</option>
-            </select>
-          </div>
-          <div>
-            <label>가격(원)</label>
-            <input id="price" type="number" inputmode="numeric" min="0" step="100" placeholder="예: 15000">
-          </div>
-        </div>
-
-        <label>포함 아이템 (여러개 선택)</label>
-        <div id="items" class="grid"></div>
-
-        <div style="display:flex; gap:8px; margin-top:12px;">
-          <button id="save" class="btn" type="button">저장(신규/수정)</button>
-          <button id="delete" class="btn secondary" type="button">삭제</button>
-          <div id="msg" style="margin-left:8px;"></div>
-        </div>
-        <div class="muted">※ 수정: 아래 목록의 "편집"을 눌러 불러온 뒤 저장하세요.</div>
-      </div>
-
-      <div class="panel">
-        <h2 style="margin-top:0">계정 목록</h2>
-        <table>
-          <thead>
-            <tr><th>UID</th><th>부가설명</th><th>판매상태</th><th>가격</th><th>아이템</th><th class="right">작업</th></tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </div>
+<header>
+  <div class="hdr-in">
+    <h1>관리자 <span class="badge">림버스</span></h1>
+    <a class="btn secondary" href="./" style="text-decoration:none;">방문자 보기</a>
   </div>
+</header>
+
+<main class="container">
+  <div class="row">
+    <!-- 아이템 관리 -->
+    <section class="panel">
+      <h2>아이템 관리</h2>
+      <p class="desc">아이템 이미지를 구글드라이브 폴더에 업로드하고 시트(items)에 자동 반영합니다.</p>
+      <label>아이템명</label>
+      <input id="item-name" type="text" placeholder="예: 가시 오랏줄">
+      <label>이미지 파일</label>
+      <input id="item-file" type="file" accept="image/*">
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button id="upload-item" class="btn" type="button">아이템 업로드</button>
+        <button id="refresh-items" class="btn secondary" type="button">목록 새로고침</button>
+      </div>
+      <div id="item-msg" class="footnote"></div>
+      <div class="hr"></div>
+      <div id="items"></div>
+    </section>
+
+    <!-- 계정 관리 -->
+    <section class="panel">
+      <h2>계정 추가/수정</h2>
+      <p class="desc">UID, 설명, 판매상태, 가격 + 포함 아이템을 설정합니다.</p>
+      <label>UID</label>
+      <input id="acc-uid" type="text" placeholder="예: EX0001">
+
+      <label>부가설명</label>
+      <input id="acc-desc" type="text" placeholder="예: 뽑기권 1000장">
+
+      <label>판매상태</label>
+      <select id="acc-status">
+        <option value="판매중">판매중</option>
+        <option value="판매완료">판매완료</option>
+      </select>
+
+      <label>가격(원)</label>
+      <input id="acc-price" type="number" inputmode="numeric" min="0" step="100">
+
+      <label>포함 아이템</label>
+      <div id="acc-items"></div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="add-row" class="btn secondary" type="button">+ 행 추가</button>
+        <button id="save-acc" class="btn" type="button">저장(추가/수정)</button>
+      </div>
+      <div id="acc-msg" class="footnote"></div>
+
+      <div class="hr"></div>
+      <h2>계정 삭제</h2>
+      <div style="display:flex; gap:8px;">
+        <input id="del-uid" type="text" placeholder="삭제할 UID 입력">
+        <button id="del-acc" class="btn secondary" type="button">삭제</button>
+      </div>
+      <div id="del-msg" class="footnote"></div>
+    </section>
+  </div>
+</main>
+
+<!-- 비밀번호 게이트 -->
+<div id="gate">
+  <div class="box">
+    <h3 style="margin:0 0 6px;">관리자 로그인</h3>
+    <p class="muted" style="margin:0 0 10px;">비밀번호를 입력하세요.</p>
+    <input id="pw" type="password" placeholder="비밀번호" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:10px;">
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button id="pw-ok" class="btn" type="button">확인</button>
+    </div>
+    <div id="pw-msg" class="footnote"></div>
+  </div>
+</div>
 
 <script>
-const API_BASE="https://script.google.com/macros/s/AKfycbyG0b4kODK877M-sqBKHRKJ0nUZZKqtH3fipmbxShlW_zlSYW9ivyrqSUW1wxjvR_4bAA/exec";
-const ADMIN_PASSWORD="050200";
+const API_BASE = "https://script.google.com/macros/s/AKfycbyG0b4kODK877M-sqBKHRKJ0nUZZKqtH3fipmbxShlW_zlSYW9ivyrqSUW1wxjvR_4bAA/exec";
+const ADMIN_PASSWORD = "050200";
+const PLACEHOLDER = "https://dummyimage.com/300x200/e9e9ef/777.png&text=No+Image";
 
-function saveToken(t){ localStorage.setItem('limbus_admin_token', t); }
-function getToken(){ return localStorage.getItem('limbus_admin_token') || ''; }
+const $ = (s)=>document.querySelector(s);
 
-function qs(s){ return document.querySelector(s); }
-async function fetchJSON(u,opt){ const r=await fetch(u,opt); if(!r.ok) throw new Error(r.status); return r.json(); }
-
-// 아이템 UI/연동
-async function loadItems(){ const items=await fetchJSON(`${API_BASE}?sheet=items`); const box=qs('#items'); box.innerHTML='';
-  items.forEach(it=>{ const row=document.createElement('label'); row.className='item';
-    row.innerHTML=`<input type='checkbox' value='${it["아이템명"]}'><img src='${it["이미지URL"]}' alt='${it["아이템명"]}'><span>${it["아이템명"]}</span>`; box.appendChild(row); });
+function toBase64(file){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
 }
+function safeImg(url){ try{ new URL(url) }catch(e){ return PLACEHOLDER }; if(!/^https:/i.test(url)) return PLACEHOLDER; return url; }
+async function j(url, opt={}){ const r=await fetch(url, {...opt, headers:{'Content-Type':'application/json'}, }); if(!r.ok) throw new Error('API '+r.status); return r.json(); }
 
-async function itemUpload(){ const name=qs('#item-name').value.trim(); const file=qs('#item-file').files[0]; if(!name||!file){ qs('#item-msg').textContent='아이템명과 파일을 선택하세요.'; return; }
-  const fr=new FileReader(); fr.onload=async ()=>{ const dataUrl=fr.result; const base64=dataUrl.split(',')[1]; const mime=(file.type||'image/jpeg'); const filename=file.name|| (name+'.jpg');
-    try{ const res=await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        type:'item_upload', data:{ name, filename, mime, base64 }, secret:getToken()
-    }) }); qs('#item-msg').innerHTML = `<span style='color:#0a7'>업로드 완료</span> - URL: ${res.url||''}`; await loadItems(); }catch(e){ qs('#item-msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
-  }; fr.readAsDataURL(file);
-}
-
-async function itemDelete(){ const name=qs('#item-name').value.trim(); if(!name){ qs('#item-msg').textContent='아이템명을 입력하세요.'; return; }
-  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'item_delete', data:{ name }, secret:getToken() }) });
-    qs('#item-msg').innerHTML = "<span style='color:#0a7'>삭제 완료</span>"; await loadItems(); }catch(e){ qs('#item-msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
-}
-
-// 계정 CRUD
-function fillForm(acc){ qs('#uid').value=acc["UID"]||''; qs('#desc').value=acc["부가설명"]||''; qs('#status').value=acc["판매상태"]||'판매중'; qs('#price').value=acc["가격"]||'';
-  const vals=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>acc[k]);
-  document.querySelectorAll('#items input[type=checkbox]').forEach(ch=> ch.checked = vals.includes(ch.value));
-}
-async function loadAccounts(){ const list=await fetchJSON(`${API_BASE}?sheet=accounts`); const tb=qs('#tbody'); tb.innerHTML='';
-  list.forEach(acc=>{ const items=Object.keys(acc).filter(k=>k.startsWith('포함아이템') && acc[k]).map(k=>`<span class='pill'>${acc[k]}</span>`).join('');
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${acc["UID"]||''}</td><td>${acc["부가설명"]||''}</td><td>${acc["판매상태"]||''}</td><td>${acc["가격"]||''}</td><td>${items}</td><td class='right'><button class='btn secondary' data-uid='${acc["UID"]}'>편집</button></td>`;
-    tr.querySelector('button').addEventListener('click', ()=> fillForm(acc)); tb.appendChild(tr); });
-}
-
-function collectItems(){ return Array.from(document.querySelectorAll('#items input:checked')).map(i=>i.value); }
-
-async function upsertAccount(){ const data={ UID:qs('#uid').value.trim(), desc:qs('#desc').value.trim(), status:qs('#status').value, price:Number(qs('#price').value||0), items:collectItems() };
-  if(!data.UID){ alert('UID를 입력하세요.'); return; }
-  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'account_upsert', data, secret:getToken() }) });
-    qs('#msg').innerHTML = "<span style='color:#0a7'>저장 완료</span>"; await loadAccounts(); }catch(e){ qs('#msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
-}
-
-async function deleteAccount(){ const uid=qs('#uid').value.trim(); if(!uid){ alert('UID를 입력하세요.'); return; }
-  if(!confirm('정말 삭제하시겠어요?')) return;
-  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'account_delete', data:{ UID:uid }, secret:getToken() }) });
-    qs('#msg').innerHTML = "<span style='color:#0a7'>삭제 완료</span>"; await loadAccounts(); }catch(e){ qs('#msg').innerHTML = `<span style='color:#c00'>실패: ${e}</span>`; }
-}
-
-qs('#save').addEventListener('click', upsertAccount);
-qs('#delete').addEventListener('click', deleteAccount);
-qs('#item-upload').addEventListener('click', itemUpload);
-qs('#item-delete').addEventListener('click', itemDelete);
-
-// 로그인
-qs('#login').addEventListener('click', async ()=>{ const pw=qs('#pw').value.trim(); if(!pw){ qs('#authMsg').textContent='비밀번호를 입력하세요.'; return; }
-  if(pw!=="050200"){ qs('#authMsg').textContent='비밀번호가 틀렸습니다.'; return; }
-  try{ await fetchJSON(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'auth_check', secret: pw }) }); }catch(_e){}
-  saveToken(pw); qs('#authPanel').style.display='none'; qs('#main').style.display='block'; await loadItems(); await loadAccounts();
+/* -------- 비밀번호 / 게이트 -------- */
+$('#pw-ok').addEventListener('click', async ()=>{
+  const input = $('#pw').value.trim();
+  if(!input) return $('#pw-msg').textContent='비밀번호를 입력하세요.';
+  if(input !== ADMIN_PASSWORD){ $('#pw-msg').textContent='비밀번호가 올바르지 않습니다.'; return; }
+  try{
+    const auth = await j(API_BASE, { method:'POST', body: JSON.stringify({ type:'auth_check', secret: input }) });
+    if(!auth.ok){ $('#pw-msg').textContent='서버 인증 실패'; return; }
+  }catch(e){
+    // 서버에서 auth_check 미구현이어도 통과
+  }
+  $('#gate').style.display='none';
 });
 
-// 자동 로그인
-(function init(){ const t=getToken(); if(t && t==="050200"){ qs('#authPanel').style.display='none'; qs('#main').style.display='block'; loadItems(); loadAccounts(); } })();
+/* -------- 아이템 목록/업로드 -------- */
+let itemList = [];
+
+async function loadItems(){
+  const data = await j(API_BASE+'?sheet=items');
+  itemList = Array.isArray(data)? data: [];
+  const wrap = $('#items'); wrap.innerHTML='';
+  itemList.forEach(it=>{
+    const btn = document.createElement('button');
+    btn.type='button'; btn.className='card'; btn.dataset.name=it["아이템명"];
+    btn.innerHTML = `<img loading="lazy" referrerpolicy="no-referrer" src="${safeImg(it["이미지URL"]||'')}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'" alt=""><div class="name">${it["아이템명"]}</div>`;
+    wrap.appendChild(btn);
+  });
+  refreshAccRowsThumbs();
+}
+
+$('#refresh-items').addEventListener('click', loadItems);
+
+$('#upload-item').addEventListener('click', async ()=>{
+  const name = $('#item-name').value.trim();
+  const file = $('#item-file').files[0];
+  if(!name || !file){ $('#item-msg').innerHTML = '<span class="err">아이템명/파일을 확인하세요.</span>'; return; }
+  try{
+    $('#item-msg').textContent='업로드 중...';
+    const base64 = await toBase64(file);
+    const r = await j(API_BASE, { method:'POST', body: JSON.stringify({
+      type:'item_upload', secret: ADMIN_PASSWORD, data: { name, filename:file.name, mime:file.type||'image/jpeg', base64 }
+    })});
+    if(r.error){ throw new Error(r.error); }
+    $('#item-msg').innerHTML = `<span class="ok">업로드 완료</span> — URL: ${r.url||''}`;
+    $('#item-name').value=''; $('#item-file').value='';
+    await loadItems();
+  }catch(e){
+    $('#item-msg').innerHTML = '<span class="err">실패: '+(e.message||e)+'</span>';
+  }
+});
+
+/* -------- 계정 추가/수정 -------- */
+function makeItemRow(selectedName=''){
+  const div = document.createElement('div');
+  div.className='item-row';
+  const img = document.createElement('img');
+  const sel = document.createElement('select');
+  const btn = document.createElement('button');
+  btn.type='button'; btn.className='btn secondary remove'; btn.textContent='삭제';
+
+  sel.innerHTML = '<option value="">(선택)</option>' + itemList.map(it=>`<option value="${it["아이템명"]}">${it["아이템명"]}</option>`).join('');
+  sel.value = selectedName||'';
+
+  function updateThumb(){
+    const name = sel.value;
+    const found = itemList.find(x=>x["아이템명"]===name);
+    img.src = safeImg(found && found["이미지URL"] ? found["이미지URL"] : PLACEHOLDER);
+    img.onerror = ()=> img.src = PLACEHOLDER;
+  }
+  sel.addEventListener('change', updateThumb);
+  btn.addEventListener('click', ()=> div.remove());
+
+  div.appendChild(img);
+  div.appendChild(sel);
+  div.appendChild(btn);
+
+  updateThumb();
+  return div;
+}
+
+function refreshAccRowsThumbs(){
+  document.querySelectorAll('.item-row').forEach(row=>{
+    const sel = row.querySelector('select');
+    const img = row.querySelector('img');
+    const name = sel.value;
+    const found = itemList.find(x=>x["아이템명"]===name);
+    img.src = safeImg(found && found["이미지URL"] ? found["이미지URL"] : PLACEHOLDER);
+  });
+}
+
+$('#add-row').addEventListener('click', ()=>{
+  $('#acc-items').appendChild(makeItemRow(''));
+});
+
+$('#save-acc').addEventListener('click', async ()=>{
+  const UID = $('#acc-uid').value.trim();
+  const desc = $('#acc-desc').value.trim();
+  const status = $('#acc-status').value;
+  const price = Number($('#acc-price').value||0);
+  const items = Array.from(document.querySelectorAll('#acc-items select')).map(s=>s.value).filter(Boolean);
+  if(!UID){ $('#acc-msg').innerHTML='<span class="err">UID를 입력하세요.</span>'; return; }
+
+  try{
+    $('#acc-msg').textContent='저장 중...';
+    const r = await j(API_BASE, { method:'POST', body: JSON.stringify({
+      type:'account_upsert', secret: ADMIN_PASSWORD,
+      data: { UID, desc, status, price, items }
+    })});
+    if(r.error) throw new Error(r.error);
+    $('#acc-msg').innerHTML='<span class="ok">저장 완료</span>';
+  }catch(e){
+    $('#acc-msg').innerHTML='<span class="err">실패: '+(e.message||e)+'</span>';
+  }
+});
+
+$('#del-acc').addEventListener('click', async ()=>{
+  const uid = $('#del-uid').value.trim();
+  if(!uid){ $('#del-msg').innerHTML='<span class="err">UID를 입력하세요.</span>'; return; }
+  try{
+    $('#del-msg').textContent='삭제 중...';
+    const r = await j(API_BASE, { method:'POST', body: JSON.stringify({
+      type:'account_delete', secret: ADMIN_PASSWORD, data: { uid }
+    })});
+    if(r.error) throw new Error(r.error);
+    $('#del-msg').innerHTML='<span class="ok">삭제 완료</span>';
+  }catch(e){
+    $('#del-msg').innerHTML='<span class="err">실패: '+(e.message||e)+'</span>';
+  }
+});
+
+/* init */
+(async function init(){
+  try{ await loadItems(); }catch(e){ console.error(e); }
+  document.getElementById('acc-items').appendChild(makeItemRow(''));
+  document.getElementById('acc-items').appendChild(makeItemRow(''));
+})();
 </script>
 </body>
 </html>
