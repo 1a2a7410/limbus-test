@@ -58,8 +58,8 @@
 </head>
 <body>
 <header>
-  <h1>관리자 · 아이템/계정 관리 </h1>
-  <div class="mut">하단 로그에서 모든 작업 결과 확인</div>
+  <h1>아이템/계정 관리 </h1>
+  <div class="mut">사진은 왜 안올라감.. </div>
 </header>
 
 <main>
@@ -67,15 +67,15 @@
   <section class="card">
     <div class="row">
       <label>웹앱 주소</label>
-      <input id="api" type="text" placeholder="apps scrips 주소 입력">
+      <input id="api" type="text" placeholder="apps scrips 주소">
     </div>
     <div class="row">
       <label>비밀번호</label>
-      <input id="secret" type="password" placeholder="ADMIN_SECRET (예: 123456)">
+      <input id="secret" type="password" placeholder="비밀번호">
     </div>
     <div class="toolbar">
       <button id="btn-auth" class="btn btn-primary">인증</button>
-      <span id="auth-tip" class="mut">인증 후 데이터 자동 로드</span>
+      <span id="auth-tip" class="mut">인증시 데이터 로딩 </span>
     </div>
   </section>
 
@@ -120,14 +120,14 @@
     <div class="mut" style="margin:8px 0 6px">포함 아이템 선택(글자만 표시)</div>
     <div id="chips-add" class="chips"></div>
     <div class="toolbar" style="margin-top:10px">
-      <label class="mut"><input type="checkbox" id="auto-uid"> UID 중복시 자동 새 UID</label>
+      <label class="mut"><input type="checkbox" id="auto-uid"> UID 중복시 자동으로 다음번호 UID생성 </label>
       <button id="btn-save-add" class="btn btn-primary" style="margin-left:auto">신규 저장</button>
     </div>
   </section>
 
   <section class="card">
     <div class="toolbar"><strong>기존 계정 수정</strong></div>
-    <div class="row"><label>수정할 UID</label><input id="edit-uid" type="text" placeholder="예: 12001"><button id="btn-load-one" class="btn btn-secondary" style="white-space:nowrap">불러오기</button></div>
+    <div class="row"><label>수정할 UID</label><input id="edit-uid" type="text" placeholder="예: 1234"><button id="btn-load-one" class="btn btn-secondary" style="white-space:nowrap">불러오기</button></div>
     <div class="grid2">
       <div class="row"><label>가격</label><input id="edit-price" type="number" inputmode="numeric"></div>
       <div class="row"><label>부가설명</label><input id="edit-desc" type="text"></div>
